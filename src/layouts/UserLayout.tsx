@@ -30,7 +30,7 @@ const UserLayout: React.FC = () => {
             {/* Logo */}
             <Link to="/" >
               <div className="hidden sm:block ">
-                { <img src={logo} alt="ZM Logo" className="h-20 rounded-lg" /> }
+               ZM Home Fabrics
                  
               </div>
             </Link>
@@ -190,9 +190,7 @@ const UserLayout: React.FC = () => {
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
-                  <span className="font-display text-xl font-bold">ZM</span>
-                </div>
+                 
                 <h2 className="font-display text-lg font-bold">ZM HOME FABRICS</h2>
               </div>
               <p className="text-sm text-primary-foreground/80">
@@ -226,8 +224,8 @@ const UserLayout: React.FC = () => {
               <h3 className="font-display text-lg font-semibold mb-4">Contact</h3>
               <ul className="space-y-2 text-sm text-primary-foreground/80">
                 <li>Email: zmhomefabrics@gmail.com</li>
-                <li>Phone: +92 300 1234567</li>
-                <li>Address: Karachi, Pakistan</li>
+                <li>Phone: +923084636557</li>
+                <li>Address: 69-8-B1 Township, Lahore </li>
               </ul>
             </div>
           </div>

@@ -53,11 +53,11 @@ const AdminLayout: React.FC = () => {
         {/* ZM LOGO */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           {sidebarOpen && (
-            <div className="">
-          
-                {<img src={logo} alt="ZM Logo" className="" />}
-             
-             
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="font-display text-sm font-bold">ZM Home Fabrics</div>
+                <div className="text-xs text-muted-foreground">Wonderful fabrics & decor</div>
+              </div>
             </div>
           )}
           <button
@@ -127,9 +127,6 @@ const AdminLayout: React.FC = () => {
         {/* ZM LOGO */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-              <span className="font-display text-sm font-bold text-sidebar-primary-foreground">ZM</span>
-            </div>
             <span className="font-display font-bold text-sm">ZM Admin</span>
           </div>
           <button

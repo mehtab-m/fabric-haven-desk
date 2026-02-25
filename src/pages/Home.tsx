@@ -56,7 +56,7 @@ const Home: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground text-sm">Free Shipping</h3>
-                <p className="text-xs text-muted-foreground">On orders over ₨5000</p>
+                <p className="text-xs text-muted-foreground">On orders over ₨ 5000</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-4">
@@ -73,7 +73,7 @@ const Home: React.FC = () => {
                 <HeadphonesIcon className="h-6 w-6 text-accent" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground text-sm">24/7 Support</h3>
+                <h3 className="font-semibold text-foreground text-sm">Support</h3>
                 <p className="text-xs text-muted-foreground">Dedicated support</p>
               </div>
             </div>
@@ -83,7 +83,7 @@ const Home: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground text-sm">Easy Returns</h3>
-                <p className="text-xs text-muted-foreground">7-day return policy</p>
+                <p className="text-xs text-muted-foreground">3-day return policy</p>
               </div>
             </div>
           </div>
