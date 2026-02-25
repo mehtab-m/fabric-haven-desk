@@ -1,0 +1,185 @@
+Fabric Haven - Inferred API Endpoints
+
+Note: The frontend in `src/` uses local mock data (src/services/mockData.ts) and contains no explicit fetch/axios calls. The following endpoints are inferred from app pages, admin pages and expected features (products, categories, cart, wishlist, auth, orders, admin). Use this as a minimal backend contract to implement REST endpoints and basic request/response shapes.
+
+Auth
+----
+POST /api/auth/register
+  - auth: none
+  - body: { name, email, password }
+  - success: 201 Created
+  - response: { user: { id, name, email, role }, token }
+
+POST /api/auth/login
+  - auth: none
+  - body: { email, password }
+  - success: 200 OK
+  - response: { user: { id, name, email, role }, token }
+
+POST /api/auth/logout
+  - auth: Bearer token
+  - success: 200 OK
+
+POST /api/auth/forgot-password
+  - body: { email }
+  - sends PIN or reset link
+  - response: { message }
+
+POST /api/auth/verify-pin
+  - body: { email, pin }
+  - response: { verified: true }
+
+POST /api/auth/reset-password
+  - body: { email, newPassword, pin }
+  - response: { message }
+
+GET /api/auth/me
+  - auth: Bearer token
+  - response: { user }
+
+Products
+--------
+GET /api/products
+  - query: ?page=&limit=&category=&subcategory=&q=&sort=
+  - response: { items: [ { id, title, slug, price, images, categoryId, subcategoryId, description, stock } ], total }
+
+GET /api/products/:id
+  - response: { id, title, price, images, description, category, subcategory, details }
+
+POST /api/products
+  - auth: Bearer (admin)
+  - body: { title, slug?, price, categoryId, subcategoryId, images: [], description, stock }
+  - response: { product }
+
+PUT /api/products/:id
+  - auth: Bearer (admin)
+  - body: partial product fields
+  - response: { product }
+
+DELETE /api/products/:id
+  - auth: Bearer (admin)
+  - response: { success: true }
+
+Categories & Subcategories
+---------------------------
+GET /api/categories
+  - response: [ { id, name, slug, image } ]
+
+GET /api/categories/:id
+  - response: { id, name, subcategories: [ { id, name } ] }
+
+POST /api/categories
+  - auth: Bearer (admin)
+  - body: { name, slug?, image }
+
+PUT /api/categories/:id
+  - auth: Bearer (admin)
+
+DELETE /api/categories/:id
+  - auth: Bearer (admin)
+
+GET /api/subcategories
+  - response: [ { id, name, categoryId } ]
+
+POST /api/subcategories
+  - auth: Bearer (admin)
+
+Cart
+----
+GET /api/cart
+  - auth: Bearer token (preferred) or session id
+  - response: { items: [ { productId, quantity, price, title, image } ], subtotal }
+
+POST /api/cart
+  - auth: Bearer token
+  - body: { productId, quantity }
+  - response: { cart }
+
+PUT /api/cart/items/:itemId
+  - auth: Bearer token
+  - body: { quantity }
+
+DELETE /api/cart/items/:itemId
+  - auth: Bearer token
+
+Wishlist
+--------
+GET /api/wishlist
+  - auth: Bearer token
+  - response: { items: [ { productId, title, image } ] }
+
+POST /api/wishlist
+  - auth: Bearer token
+  - body: { productId }
+
+DELETE /api/wishlist/:productId
+  - auth: Bearer token
+
+Checkout & Orders
+-----------------
+POST /api/checkout/create-order
+  - auth: Bearer token
+  - body: { items: [ { productId, quantity } ], shipping: { name, address, city, postalCode, country }, paymentMethod }
+  - response: { orderId, amount, status }
+
+GET /api/orders/:id
+  - auth: Bearer token (owner or admin)
+
+GET /api/orders
+  - auth: Bearer (admin) or user filtered by owner
+
+Admin / Management
+-------------------
+GET /api/admin/users
+  - auth: Bearer (admin)
+
+POST /api/admin/users
+  - auth: Bearer (admin)
+
+PUT /api/admin/users/:id
+DELETE /api/admin/users/:id
+
+GET /api/admin/analytics
+  - auth: Bearer (admin)
+  - response: { sales, topProducts, userCount }
+
+Media / Image Upload
+--------------------
+POST /api/uploads
+  - auth: Bearer (admin or user for profile)
+  - multipart/form-data: file
+  - response: { url }
+
+Search & Filters
+----------------
+GET /api/search
+  - query: ?q=&category=&minPrice=&maxPrice=&page=&limit=
+  - response: { items, total }
+
+Auth / Security Notes
+---------------------
+- Use JWT Bearer tokens for stateless auth. Include token in Authorization header: "Authorization: Bearer <token>".
+- Protect admin routes with role checks (role: 'admin').
+- Rate-limit sensitive endpoints (login, forgot-password).
+
+Suggested data shapes (minimal)
+- Product: { id, title, slug, price, images: [url], description, categoryId, subcategoryId, stock, createdAt }
+- Category: { id, name, slug, image }
+- User: { id, name, email, role }
+- Order: { id, userId, items: [ { productId, quantity, price } ], total, shipping, status, createdAt }
+
+Implementation notes
+- The frontend currently consumes mock data; start with these endpoints and return data shaped like src/services/mockData.ts.
+- Implement CORS, JSON body parsing and authentication middleware.
+- Optionally implement admin-scoped CRUD for products/categories/users and simple analytics endpoints.
+
+Priority endpoints to implement first
+1. GET /api/products
+2. GET /api/products/:id
+3. GET /api/categories
+4. Auth: POST /api/auth/register and /api/auth/login
+5. Cart endpoints (GET/POST/PUT/DELETE)
+
+Contact
+-------
+If you want, I can generate a minimal Express server skeleton implementing these endpoints with mock in-memory storage and tests — say the word and I'll scaffold it in this repo.

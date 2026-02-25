@@ -6,94 +6,105 @@
 
 @layer base {
   :root {
-    --background: 40 33% 98%;
-    --foreground: 30 10% 15%;
+  /* Light theme: make white dominant (~90%), black used for text (~9%), lime (~1%) */
+  --white: 0 0% 100%;
+  --black: 0 0% 0%;
+  --black-9: 0 0% 0% / 0.09; /* helper for subtle shadows/borders */
 
-    --card: 40 30% 97%;
-    --card-foreground: 30 10% 15%;
+  --background: var(--white);
+  --foreground: var(--black);
 
-    --popover: 40 33% 98%;
-    --popover-foreground: 30 10% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
 
-    --primary: 30 45% 25%;
-    --primary-foreground: 40 33% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
 
-    --secondary: 90 15% 85%;
-    --secondary-foreground: 30 10% 15%;
+    /* Tailwind lime-400 approx: #A3E635 -> hsl(83 78% 56%) */
+    --primary: 83 78% 56%;
+    --primary-foreground: 0 0% 0%;
 
-    --muted: 40 20% 94%;
-    --muted-foreground: 30 10% 45%;
+    --secondary: 83 78% 56%;
+    --secondary-foreground: 0 0% 0%;
 
-    --accent: 150 25% 40%;
-    --accent-foreground: 40 33% 98%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 0%;
+
+    --accent: 83 78% 56%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 40 33% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 30 20% 88%;
-    --input: 30 20% 88%;
-    --ring: 30 45% 25%;
+    --border: 0 0% 90%;
+    --input: 0 0% 95%;
+    --ring: 83 78% 56%;
 
     --radius: 0.5rem;
 
-    /* Custom tokens */
-    --cream: 40 33% 96%;
-    --warm-beige: 35 25% 90%;
-    --rich-brown: 30 45% 25%;
-    --sage: 150 25% 40%;
-    --gold: 45 80% 50%;
-    --soft-white: 40 30% 99%;
+    /* Neutral tokens kept but aligned to black/white */
+    --cream: 0 0% 100%;
+    --warm-beige: 0 0% 98%;
+    --rich-brown: 0 0% 0%;
+    --sage: 83 78% 56%;
+    --gold: 50 80% 50%;
+    --soft-white: 0 0% 100%;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(30 45% 25% / 0.9) 0%, hsl(30 35% 35% / 0.85) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(40 33% 98%) 0%, hsl(40 30% 95%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(150 25% 40%) 0%, hsl(150 30% 50%) 100%);
+  /* Gradient tokens removed — use solid colors only */
+  --gradient-hero: none;
+  --gradient-card: none;
+  --gradient-accent: none;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px hsl(30 10% 15% / 0.05);
-    --shadow-md: 0 4px 12px hsl(30 10% 15% / 0.08);
-    --shadow-lg: 0 8px 24px hsl(30 10% 15% / 0.12);
-    --shadow-xl: 0 16px 48px hsl(30 10% 15% / 0.15);
+  /* Shadows use subtle black at ~9% opacity to meet "black 9%" usage */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.09);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.16);
 
-    /* Sidebar */
-    --sidebar-background: 30 45% 25%;
-    --sidebar-foreground: 40 33% 95%;
-    --sidebar-primary: 45 80% 50%;
-    --sidebar-primary-foreground: 30 10% 15%;
-    --sidebar-accent: 30 40% 30%;
-    --sidebar-accent-foreground: 40 33% 95%;
-    --sidebar-border: 30 40% 20%;
-    --sidebar-ring: 45 80% 50%;
+  /* Sidebar aligned to white */
+  --sidebar-background: var(--white);
+  --sidebar-foreground: var(--black);
+  --sidebar-primary: 83 78% 56%;
+  --sidebar-primary-foreground: var(--black);
+  --sidebar-accent: 83 78% 56%;
+  --sidebar-accent-foreground: var(--black);
+  --sidebar-border: 0 0% 94%;
+  --sidebar-ring: 83 78% 56%;
   }
 
   .dark {
-    --background: 30 15% 10%;
-    --foreground: 40 30% 95%;
+    /* Dark theme: invert - black dominant, white text, lime as accent */
+    --white: 0 0% 100%;
+    --black: 0 0% 0%;
+    --black-9: 0 0% 0% / 0.09;
 
-    --card: 30 15% 12%;
-    --card-foreground: 40 30% 95%;
+    --background: var(--black);
+    --foreground: var(--white);
 
-    --popover: 30 15% 10%;
-    --popover-foreground: 40 30% 95%;
+    --card: var(--black);
+    --card-foreground: var(--white);
 
-    --primary: 45 70% 55%;
-    --primary-foreground: 30 10% 10%;
+    --popover: var(--black);
+    --popover-foreground: var(--white);
 
-    --secondary: 30 20% 20%;
-    --secondary-foreground: 40 30% 95%;
+    --primary: 83 78% 56%;
+    --primary-foreground: 0 0% 0%;
 
-    --muted: 30 15% 18%;
-    --muted-foreground: 40 20% 65%;
+    --secondary: 83 78% 56%;
+    --secondary-foreground: 0 0% 0%;
 
-    --accent: 150 30% 45%;
-    --accent-foreground: 40 33% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 80%;
+
+    --accent: 83 78% 56%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 62% 45%;
-    --destructive-foreground: 40 33% 98%;
+    --destructive-foreground: 0 0% 0%;
 
-    --border: 30 15% 20%;
-    --input: 30 15% 20%;
-    --ring: 45 70% 55%;
+    --border: 0 0% 10%;
+    --input: 0 0% 10%;
+    --ring: 83 78% 56%;
   }
 }
 
@@ -121,17 +132,7 @@
     font-family: 'Inter', sans-serif;
   }
 
-  .gradient-hero {
-    background: var(--gradient-hero);
-  }
-
-  .gradient-card {
-    background: var(--gradient-card);
-  }
-
-  .gradient-accent {
-    background: var(--gradient-accent);
-  }
+  /* gradient classes removed — use bg-primary, bg-muted, or bg-background instead */
 
   .shadow-elegant {
     box-shadow: var(--shadow-md);
@@ -142,10 +143,14 @@
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    /* Use solid primary color for text instead of gradient */
+    color: hsl(var(--primary));
+  }
+
+  /* Utility: apply lime accent explicitly where desired (use sparingly) */
+  .accent-only {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
 }
 
