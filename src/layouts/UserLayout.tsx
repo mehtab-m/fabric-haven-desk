@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import AuthModal from '@/components/AuthModal';
 import { useState } from 'react';
+import logo from "../../public/logo/ZM.jpg"
 
 const UserLayout: React.FC = () => {
   const { isAuthenticated, isAdmin, user, logout, setShowAuthModal, setAuthModalMode } = useAuth();
@@ -27,15 +28,10 @@ const UserLayout: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="font-display text-xl font-bold text-primary-foreground">ZM</span>
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="font-display text-lg font-bold text-foreground leading-tight">
-                  ZM HOME FABRICS
-                </h1>
-                <p className="text-xs text-muted-foreground">Premium Bedding & Fabrics</p>
+            <Link to="/" >
+              <div className="hidden sm:block ">
+                { <img src={logo} alt="ZM Logo" className="h-20 rounded-lg" /> }
+                 
               </div>
             </Link>
 
@@ -188,7 +184,7 @@ const UserLayout: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-primary text-primary-foreground">
+      <footer className=" text-primary-foreground">
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Brand */}

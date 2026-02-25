@@ -16,7 +16,7 @@ const Home: React.FC = () => {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: 'url(https://images.unsplash.com/photo-1616627547584-bf28cee262db?w=1920&q=80)'
+            backgroundImage: 'url(https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80)'
           }}
         />
         <div className="absolute inset-0 gradient-hero" />
@@ -30,13 +30,13 @@ const Home: React.FC = () => {
               Crafted for comfort, designed for elegance.
             </p>
             <div className="flex flex-wrap gap-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <Button asChild variant="gold" size="xl">
+              <Button asChild variant="accent" size="xl">
                 <Link to="/products">
                   Shop Now
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button asChild variant="heroOutline" size="xl">
+              <Button asChild className="bg-gray-300" variant="outline" size="xl">
                 <Link to="/categories">
                   Browse Categories
                 </Link>
@@ -137,7 +137,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary">
+      <section className="py-20 bg-gray-200">
         <div className="container mx-auto px-4 text-center">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
             Transform Your Living Space
@@ -146,7 +146,7 @@ const Home: React.FC = () => {
             Join thousands of satisfied customers who have elevated their homes with our premium fabrics. 
             Quality guaranteed.
           </p>
-          <Button asChild variant="gold" size="xl">
+          <Button asChild variant="secondary" size="xl">
             <Link to="/products">
               Start Shopping
               <ArrowRight className="ml-2 h-5 w-5" />

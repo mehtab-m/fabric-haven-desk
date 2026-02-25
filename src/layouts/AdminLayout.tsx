@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import logo from "../../public/logo/ZM.jpg"
 import {
   LayoutDashboard,
   FolderTree,
@@ -49,14 +50,14 @@ const AdminLayout: React.FC = () => {
           sidebarOpen ? "w-64" : "w-20"
         )}
       >
-        {/* Logo */}
+        {/* ZM LOGO */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           {sidebarOpen && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                <span className="font-display text-sm font-bold text-foreground">ZM</span>
-              </div>
-              <span className="font-display font-bold text-sm">ZM Admin</span>
+            <div className="">
+          
+                {<img src={logo} alt="ZM Logo" className="" />}
+             
+             
             </div>
           )}
           <button
@@ -78,8 +79,8 @@ const AdminLayout: React.FC = () => {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
                   isActive
-                    ? "bg-muted text-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-muted hover:text-foreground"
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
@@ -123,11 +124,11 @@ const AdminLayout: React.FC = () => {
           mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
+        {/* ZM LOGO */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-              <span className="font-display text-sm font-bold text-foreground">ZM</span>
+            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
+              <span className="font-display text-sm font-bold text-sidebar-primary-foreground">ZM</span>
             </div>
             <span className="font-display font-bold text-sm">ZM Admin</span>
           </div>
@@ -151,8 +152,8 @@ const AdminLayout: React.FC = () => {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
                   isActive
-                    ? "bg-muted text-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-muted hover:text-foreground"
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
@@ -202,8 +203,8 @@ const AdminLayout: React.FC = () => {
             <span className="text-sm text-muted-foreground hidden sm:block">
               Welcome, {user?.name}
             </span>
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-foreground text-sm font-medium">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground text-sm font-medium">
                 {user?.name?.charAt(0) || 'A'}
               </span>
             </div>
