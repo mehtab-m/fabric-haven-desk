@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import CategoryCard from '@/components/CategoryCard';
-import { categories as mockCategories } from '@/services/mockData';
+import { Category } from '@/services/mockData';
 import { categoryAPI } from '@/services/api';
 
 const Categories: React.FC = () => {
-  const [categories, setCategories] = useState<any[]>(mockCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,18 +14,20 @@ const Categories: React.FC = () => {
         setIsLoading(true);
         setError(null);
         const data = await categoryAPI.getAll();
-        
-        // Handle both array and object with items property
-        if (Array.isArray(data)) {
-          setCategories(data);
-        } else if (data.items && Array.isArray(data.items)) {
-          setCategories(data.items);
-        }
+        const items = Array.isArray(data) ? data : data.items || [];
+        setCategories(
+          items.map((c: any) => ({
+            id: c._id || c.id,
+            name: c.name,
+            slug: c.slug,
+            image: c.image,
+            description: (c as any).description || '',
+          }))
+        );
       } catch (err) {
         console.error('Failed to load categories:', err);
-        setError('Failed to load categories. Using mock data.');
-        // Fallback to mock data
-        setCategories(mockCategories);
+        setError('Failed to load categories.');
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }

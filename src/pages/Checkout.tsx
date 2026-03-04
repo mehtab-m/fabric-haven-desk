@@ -15,14 +15,9 @@ const Checkout: React.FC = () => {
   const [orderPlaced, setOrderPlaced] = useState(false);
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
+    name: '',
     phone: '',
     address: '',
-    city: '',
-    state: '',
-    zip: '',
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,21 +34,19 @@ const Checkout: React.FC = () => {
 
     try {
       const orderData = {
-        products: items.map(item => ({
+        items: items.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
-          price: item.product.discountedPrice,
         })),
-        total: totalPrice,
-        shippingAddress: {
-          name: `${formData.firstName} ${formData.lastName}`,
-          street: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zip,
-          phone: formData.phone,
-          email: formData.email,
+        shipping: {
+          name: formData.name,
+          address: formData.address,
+          // Backend requires these fields; use generic defaults since UI only asks for one address field
+          city: 'N/A',
+          postalCode: '00000',
+          country: 'Pakistan',
         },
+        paymentMethod: 'COD',
       };
 
       await orderAPI.create(orderData);
@@ -85,7 +78,7 @@ const Checkout: React.FC = () => {
           Order Placed Successfully!
         </h1>
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-          Thank you for shopping with ZM HOME FABRICS. We'll send you a confirmation email shortly.
+          Thank you for shopping with ZM HOME FABRICS. Our team will contact you soon with order details.
         </p>
         <Button asChild>
           <Link to="/">Continue Shopping</Link>
@@ -126,36 +119,17 @@ const Checkout: React.FC = () => {
               <h2 className="font-display text-xl font-bold text-foreground mb-6">
                 Contact Information
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="name">Name</Label>
                   <Input 
-                    id="firstName" 
+                    id="name" 
                     required 
-                    value={formData.firstName}
+                    value={formData.name}
                     onChange={handleInputChange}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input 
-                    id="lastName" 
-                    required 
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    required 
-                    value={formData.email}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="md:col-span-2">
                   <Label htmlFor="phone">Phone</Label>
                   <Input 
                     id="phone" 
@@ -175,42 +149,13 @@ const Checkout: React.FC = () => {
               </h2>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="address">Street Address</Label>
+                  <Label htmlFor="address">Address</Label>
                   <Input 
                     id="address" 
                     required 
                     value={formData.address}
                     onChange={handleInputChange}
                   />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="city">City</Label>
-                    <Input 
-                      id="city" 
-                      required 
-                      value={formData.city}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="state">Province</Label>
-                    <Input 
-                      id="state" 
-                      required 
-                      value={formData.state}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="zip">Postal Code</Label>
-                    <Input 
-                      id="zip" 
-                      required 
-                      value={formData.zip}
-                      onChange={handleInputChange}
-                    />
-                  </div>
                 </div>
               </div>
             </div>

@@ -47,7 +47,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             try {
               const product = await productAPI.getById(item.productId);
               return {
-                id: item.id || item._id,
+                id: item.itemId || item.id || item._id,
                 product: {
                   id: product.id,
                   name: product.title || product.name,
@@ -90,23 +90,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       setIsLoading(true);
-      const response = await cartAPI.addItem({
+      await cartAPI.addItem({
         productId: product.id,
         quantity: 1,
       });
 
-      // Update local state
-      setItems((prev) => {
-        const existingItem = prev.find((item) => item.product.id === product.id);
-        if (existingItem) {
-          return prev.map((item) =>
-            item.product.id === product.id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          );
-        }
-        return [...prev, { id: response.id, product, quantity: 1 }];
-      });
+      await loadCart();
     } catch (error) {
       console.error('Failed to add to cart:', error);
       throw error;
@@ -122,7 +111,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (item?.id) {
         await cartAPI.deleteItem(item.id);
       }
-      setItems((prev) => prev.filter((item) => item.product.id !== productId));
+      await loadCart();
     } catch (error) {
       console.error('Failed to remove from cart:', error);
       throw error;
@@ -143,11 +132,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (item?.id) {
         await cartAPI.updateItem(item.id, { quantity });
       }
-      setItems((prev) =>
-        prev.map((item) =>
-          item.product.id === productId ? { ...item, quantity } : item
-        )
-      );
+      await loadCart();
     } catch (error) {
       console.error('Failed to update quantity:', error);
       throw error;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,11 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { products as initialProducts, categories, subcategories, Product } from '@/services/mockData';
+import { Product, Category, Subcategory } from '@/services/mockData';
+import { categoryAPI, productAPI, subcategoryAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const AdminProducts: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
@@ -26,6 +29,69 @@ const AdminProducts: React.FC = () => {
 
   const getCategoryName = (categoryId: string) => categories.find(c => c.id === categoryId)?.name || 'Unknown';
   const getSubcategoryName = (subcategoryId: string) => subcategories.find(s => s.id === subcategoryId)?.name || 'Unknown';
+
+  // Load categories, subcategories and products from backend
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [categoriesData, subcategoriesData, productsData] = await Promise.all([
+          categoryAPI.getAll(),
+          subcategoryAPI.getAll(),
+          productAPI.getAll(),
+        ]);
+
+        const mappedCategories = (Array.isArray(categoriesData) ? categoriesData : categoriesData.items || []).map(
+          (c: any) =>
+            ({
+              id: c._id || c.id,
+              name: c.name,
+              slug: c.slug,
+              image: c.image,
+              description: (c as any).description || '',
+            } as Category)
+        );
+
+        const mappedSubcategories = (Array.isArray(subcategoriesData) ? subcategoriesData : subcategoriesData.items || []).map(
+          (s: any) =>
+            ({
+              id: s._id || s.id,
+              categoryId: s.categoryId,
+              name: s.name,
+              slug: s.slug,
+            } as Subcategory)
+        );
+
+        const items = Array.isArray(productsData) ? productsData : productsData.items || [];
+        const mappedProducts: Product[] = items.map((p: any) => ({
+          id: p.id || p._id,
+          name: p.title || p.name,
+          categoryId: p.categoryId,
+          subcategoryId: p.subcategoryId,
+          originalPrice: p.price || p.originalPrice,
+          discountedPrice: p.price || p.discountedPrice || p.price,
+          showOnHomePage: p.showOnHomePage || false,
+          images: p.images || ['https://via.placeholder.com/300'],
+          description: p.description,
+          inStock: (p.stock || 0) > 0,
+          rating: p.rating || 0,
+          reviews: p.reviews || 0,
+        }));
+
+        setCategories(mappedCategories);
+        setSubcategories(mappedSubcategories);
+        setProducts(mappedProducts);
+      } catch (error: any) {
+        console.error('Failed to load products/categories', error);
+        toast({
+          title: 'Failed to load products',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    };
+
+    loadData();
+  }, []);
 
   const filteredSubcategories = useMemo(() => {
     return subcategories.filter(s => s.categoryId === formData.categoryId);
@@ -55,47 +121,98 @@ const AdminProducts: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const productData = {
-      name: formData.name,
+    const baseData = {
+      title: formData.name,
+      price: parseFloat(formData.discountedPrice || formData.originalPrice),
       categoryId: formData.categoryId,
       subcategoryId: formData.subcategoryId,
-      originalPrice: parseFloat(formData.originalPrice),
-      discountedPrice: parseFloat(formData.discountedPrice),
-      description: formData.description,
-      showOnHomePage: formData.showOnHomePage,
       images: [formData.image || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80'],
-      inStock: true,
-      rating: 4.5,
-      reviews: 0
+      description: formData.description,
+      stock: 100,
     };
 
-    if (editingProduct) {
-      setProducts(products.map(p => 
-        p.id === editingProduct.id ? { ...p, ...productData } : p
-      ));
-      toast({ title: 'Product updated successfully' });
-    } else {
-      const newProduct: Product = {
-        id: `prod-${Date.now()}`,
-        ...productData
-      };
-      setProducts([...products, newProduct]);
-      toast({ title: 'Product added successfully' });
+    try {
+      if (editingProduct) {
+        const updated = await productAPI.update(editingProduct.id, baseData);
+        const mapped: Product = {
+          id: updated.id || updated._id,
+          name: updated.title || updated.name,
+          categoryId: updated.categoryId,
+          subcategoryId: updated.subcategoryId,
+          originalPrice: updated.price,
+          discountedPrice: updated.price,
+          showOnHomePage: editingProduct.showOnHomePage,
+          images: updated.images || [formData.image],
+          description: updated.description,
+          inStock: (updated.stock || 0) > 0,
+          rating: editingProduct.rating,
+          reviews: editingProduct.reviews,
+        };
+        setProducts(products.map(p => (p.id === editingProduct.id ? mapped : p)));
+        toast({ title: 'Product updated successfully' });
+      } else {
+        const created = await productAPI.create(baseData);
+        const newProduct: Product = {
+          id: created.id || created._id,
+          name: created.title || created.name,
+          categoryId: created.categoryId,
+          subcategoryId: created.subcategoryId,
+          originalPrice: created.price,
+          discountedPrice: created.price,
+          showOnHomePage: formData.showOnHomePage,
+          images: created.images || [formData.image],
+          description: created.description,
+          inStock: (created.stock || 0) > 0,
+          rating: 0,
+          reviews: 0,
+        };
+        setProducts([...products, newProduct]);
+        toast({ title: 'Product added successfully' });
+      }
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Failed to save product', error);
+      toast({
+        title: 'Failed to save product',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
-    setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setProducts(products.filter(p => p.id !== id));
-    toast({ title: 'Product deleted successfully' });
+  const handleDelete = async (id: string) => {
+    try {
+      await productAPI.delete(id);
+      setProducts(products.filter(p => p.id !== id));
+      toast({ title: 'Product deleted successfully' });
+    } catch (error: any) {
+      console.error('Failed to delete product', error);
+      toast({
+        title: 'Failed to delete product',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
-  const toggleShowOnHome = (id: string) => {
-    setProducts(products.map(p => 
-      p.id === id ? { ...p, showOnHomePage: !p.showOnHomePage } : p
-    ));
+  const toggleShowOnHome = async (id: string) => {
+    const current = products.find((p) => p.id === id);
+    if (!current) return;
+
+    const next = !current.showOnHomePage;
+    try {
+      await productAPI.update(id, { showOnHomePage: next });
+      setProducts(products.map(p => (p.id === id ? { ...p, showOnHomePage: next } : p)));
+    } catch (error: any) {
+      console.error('Failed to toggle show on home', error);
+      toast({
+        title: 'Failed to update product',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

@@ -1,37 +1,94 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Edit, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { customers as initialCustomers, Customer } from '@/services/mockData';
+import { Customer } from '@/services/mockData';
+import { adminAPI, orderAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const AdminCustomers: React.FC = () => {
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' });
+
+  useEffect(() => {
+    const loadCustomers = async () => {
+      try {
+        const [usersData, ordersData] = await Promise.all([adminAPI.getUsers(), orderAPI.getAll()]);
+
+        const orders = Array.isArray(ordersData) ? ordersData : ordersData.items || [];
+        const orderCountByUser = new Map<string, number>();
+        orders.forEach((o: any) => {
+          const uid = o.userId?._id || o.userId;
+          if (!uid) return;
+          orderCountByUser.set(uid, (orderCountByUser.get(uid) || 0) + 1);
+        });
+
+        const mapped: Customer[] = (usersData as any[])
+          .filter((u) => (u.role || 'user') === 'user')
+          .map((u) => ({
+            id: u._id || u.id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone || '',
+            orderCount: orderCountByUser.get(u._id || u.id) || 0,
+            joinedDate: u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : '',
+          }));
+
+        setCustomers(mapped);
+      } catch (error: any) {
+        console.error('Failed to load customers', error);
+        toast({
+          title: 'Failed to load customers',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    };
+
+    loadCustomers();
+  }, []);
 
   const openAddModal = () => {
     setViewingCustomer(null);
-    setFormData({ name: '', email: '', phone: '' });
+    setFormData({ name: '', email: '', phone: '', password: '' });
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newCustomer: Customer = {
-      id: `cust-${Date.now()}`,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      orderCount: 0,
-      joinedDate: new Date().toISOString().split('T')[0]
-    };
-    setCustomers([...customers, newCustomer]);
-    toast({ title: 'Customer added successfully' });
-    setIsModalOpen(false);
+    try {
+      const created = await adminAPI.createUser({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        role: 'user',
+      });
+
+      const newCustomer: Customer = {
+        id: (created as any)._id || (created as any).id,
+        name: created.name,
+        email: created.email,
+        phone: created.phone || '',
+        orderCount: 0,
+        joinedDate: created.createdAt ? new Date(created.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      };
+
+      setCustomers([newCustomer, ...customers]);
+      toast({ title: 'Customer created successfully' });
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Failed to create customer', error);
+      toast({
+        title: 'Failed to create customer',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -113,6 +170,16 @@ const AdminCustomers: React.FC = () => {
             <div>
               <Label htmlFor="phone">Phone</Label>
               <Input id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+            </div>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+              />
             </div>
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>

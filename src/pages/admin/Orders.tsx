@@ -1,23 +1,90 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Eye, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { orders as initialOrders, products, Order } from '@/services/mockData';
+import { Order, Product } from '@/services/mockData';
+import { orderAPI, productAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const AdminOrders: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Load orders and products from backend
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [ordersData, productsData] = await Promise.all([orderAPI.getAll(), productAPI.getAll()]);
+
+        const items = Array.isArray(ordersData) ? ordersData : ordersData.items || [];
+        const mappedOrders: Order[] = items.map((o: any) => ({
+          id: o._id || o.id,
+          customerId: o.userId?._id || o.userId || '',
+          customerName: o.userId?.name || 'Customer',
+          products: (o.items || []).map((i: any) => ({
+            productId: i.product || i.productId,
+            quantity: i.quantity,
+            price: i.price,
+          })),
+          total: o.total,
+          status: String(o.status || 'pending').toLowerCase() as Order['status'],
+          orderDate: o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '',
+          address: o.shipping?.address || '',
+        }));
+
+        const productItems = Array.isArray(productsData) ? productsData : productsData.items || [];
+        const mappedProducts: Product[] = productItems.map((p: any) => ({
+          id: p._id || p.id,
+          name: p.title || p.name,
+          categoryId: p.categoryId,
+          subcategoryId: p.subcategoryId,
+          originalPrice: p.price,
+          discountedPrice: p.price,
+          showOnHomePage: p.showOnHomePage || false,
+          images: p.images || ['https://via.placeholder.com/300'],
+          description: p.description,
+          inStock: (p.stock || 0) > 0,
+          rating: 0,
+          reviews: 0,
+        }));
+
+        setOrders(mappedOrders);
+        setProducts(mappedProducts);
+      } catch (error: any) {
+        console.error('Failed to load orders', error);
+        toast({
+          title: 'Failed to load orders',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    };
+
+    loadData();
+  }, []);
 
   const filteredOrders = statusFilter === 'all' 
     ? orders 
     : orders.filter(o => o.status === statusFilter);
 
   const updateStatus = (orderId: string, newStatus: Order['status']) => {
-    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-    toast({ title: `Order status updated to ${newStatus}` });
+    orderAPI
+      .updateStatus(orderId, newStatus)
+      .then(() => {
+        setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        toast({ title: `Order status updated to ${newStatus}` });
+      })
+      .catch((error: any) => {
+        console.error('Failed to update order status', error);
+        toast({
+          title: 'Failed to update order status',
+          description: error.message,
+          variant: 'destructive',
+        });
+      });
   };
 
   const getProductName = (productId: string) => {

@@ -1,39 +1,104 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, Heart, ShoppingCart, Star, Minus, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
-import { products, categories, subcategories } from '@/services/mockData';
+import { Product, Category, Subcategory } from '@/services/mockData';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { cn } from '@/lib/utils';
+import { productAPI, categoryAPI, subcategoryAPI } from '@/services/api';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
-  const product = useMemo(() => {
-    return products.find((p) => p.id === id);
+  useEffect(() => {
+    const loadData = async () => {
+      if (!id) return;
+      try {
+        const backendProduct = await productAPI.getById(id);
+        const mappedProduct: Product = {
+          id: backendProduct._id || backendProduct.id,
+          name: backendProduct.title || backendProduct.name,
+          categoryId: backendProduct.categoryId,
+          subcategoryId: backendProduct.subcategoryId,
+          originalPrice: backendProduct.price,
+          discountedPrice: backendProduct.price,
+          showOnHomePage: backendProduct.showOnHomePage || false,
+          images: backendProduct.images || ['https://via.placeholder.com/300'],
+          description: backendProduct.description,
+          inStock: (backendProduct.stock || 0) > 0,
+          rating: backendProduct.rating || 0,
+          reviews: backendProduct.reviews || 0,
+        };
+        setProduct(mappedProduct);
+
+        if (mappedProduct.categoryId) {
+          const categoriesData = await categoryAPI.getAll();
+          const items = Array.isArray(categoriesData) ? categoriesData : categoriesData.items || [];
+          const cat = items.find((c: any) => (c._id || c.id) === mappedProduct.categoryId);
+          if (cat) {
+            setCategory({
+              id: cat._id || cat.id,
+              name: cat.name,
+              slug: cat.slug,
+              image: cat.image,
+              description: (cat as any).description || '',
+            });
+          }
+        }
+
+        if (mappedProduct.subcategoryId) {
+          const subcategoriesData = await subcategoryAPI.getAll();
+          const subItems = Array.isArray(subcategoriesData) ? subcategoriesData : subcategoriesData.items || [];
+          const sub = subItems.find((s: any) => (s._id || s.id) === mappedProduct.subcategoryId);
+          if (sub) {
+            setSubcategory({
+              id: sub._id || sub.id,
+              categoryId: sub.categoryId,
+              name: sub.name,
+              slug: sub.slug,
+            });
+          }
+        }
+
+        // Load related products in same category
+        if (mappedProduct.categoryId) {
+          const productsData = await productAPI.getAll({ category: mappedProduct.categoryId });
+          const prodItems = Array.isArray(productsData) ? productsData : productsData.items || [];
+          const mappedRelated: Product[] = prodItems
+            .filter((p: any) => (p._id || p.id) !== mappedProduct.id)
+            .slice(0, 4)
+            .map((p: any) => ({
+              id: p._id || p.id,
+              name: p.title || p.name,
+              categoryId: p.categoryId,
+              subcategoryId: p.subcategoryId,
+              originalPrice: p.price,
+              discountedPrice: p.price,
+              showOnHomePage: p.showOnHomePage || false,
+              images: p.images || ['https://via.placeholder.com/300'],
+              description: p.description,
+              inStock: (p.stock || 0) > 0,
+              rating: p.rating || 0,
+              reviews: p.reviews || 0,
+            }));
+          setRelatedProducts(mappedRelated);
+        }
+      } catch (error) {
+        console.error('Failed to load product detail', error);
+      }
+    };
+
+    loadData();
   }, [id]);
-
-  const category = useMemo(() => {
-    if (!product) return null;
-    return categories.find((c) => c.id === product.categoryId);
-  }, [product]);
-
-  const subcategory = useMemo(() => {
-    if (!product) return null;
-    return subcategories.find((s) => s.id === product.subcategoryId);
-  }, [product]);
-
-  const relatedProducts = useMemo(() => {
-    if (!product) return [];
-    return products
-      .filter((p) => p.categoryId === product.categoryId && p.id !== product.id)
-      .slice(0, 4);
-  }, [product]);
 
   const inWishlist = product ? isInWishlist(product.id) : false;
 

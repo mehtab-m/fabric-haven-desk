@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductCard from '@/components/ProductCard';
-import { Product, categories, subcategories } from '@/services/mockData';
+import { Product, Category, Subcategory } from '@/services/mockData';
 import { productAPI, categoryAPI, subcategoryAPI } from '@/services/api';
 
 const Products: React.FC = () => {
@@ -18,8 +18,8 @@ const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [backendCategories, setBackendCategories] = useState<any[]>(categories);
-  const [backendSubcategories, setBackendSubcategories] = useState<any[]>(subcategories);
+  const [backendCategories, setBackendCategories] = useState<Category[]>([]);
+  const [backendSubcategories, setBackendSubcategories] = useState<Subcategory[]>([]);
 
   // Load categories and products from backend
   useEffect(() => {
@@ -30,19 +30,28 @@ const Products: React.FC = () => {
 
         // Load categories
         const categoriesData = await categoryAPI.getAll();
-        if (Array.isArray(categoriesData)) {
-          setBackendCategories(categoriesData);
-        } else if (categoriesData.items) {
-          setBackendCategories(categoriesData.items);
-        }
+        const catItems = Array.isArray(categoriesData) ? categoriesData : categoriesData.items || [];
+        setBackendCategories(
+          catItems.map((c: any) => ({
+            id: c._id || c.id,
+            name: c.name,
+            slug: c.slug,
+            image: c.image,
+            description: (c as any).description || '',
+          }))
+        );
 
         // Load subcategories
         const subcategoriesData = await subcategoryAPI.getAll();
-        if (Array.isArray(subcategoriesData)) {
-          setBackendSubcategories(subcategoriesData);
-        } else if (subcategoriesData.items) {
-          setBackendSubcategories(subcategoriesData.items);
-        }
+        const subItems = Array.isArray(subcategoriesData) ? subcategoriesData : subcategoriesData.items || [];
+        setBackendSubcategories(
+          subItems.map((s: any) => ({
+            id: s._id || s.id,
+            categoryId: s.categoryId,
+            name: s.name,
+            slug: s.slug,
+          }))
+        );
 
         // Load products
         const productsData = await productAPI.getAll({
@@ -52,63 +61,27 @@ const Products: React.FC = () => {
         });
 
         // Map backend product format to frontend format
-        if (Array.isArray(productsData)) {
-          setProducts(
-            productsData.map((p: any) => ({
-              id: p.id || p._id,
-              name: p.title || p.name,
-              categoryId: p.categoryId,
-              subcategoryId: p.subcategoryId,
-              originalPrice: p.price || p.originalPrice,
-              discountedPrice: p.price || p.discountedPrice,
-              showOnHomePage: p.showOnHomePage || false,
-              images: p.images || ['https://via.placeholder.com/300'],
-              description: p.description,
-              inStock: (p.stock || 0) > 0,
-              rating: p.rating || 0,
-              reviews: p.reviews || 0,
-            }))
-          );
-        } else if (productsData.items) {
-          setProducts(
-            productsData.items.map((p: any) => ({
-              id: p.id || p._id,
-              name: p.title || p.name,
-              categoryId: p.categoryId,
-              subcategoryId: p.subcategoryId,
-              originalPrice: p.price || p.originalPrice,
-              discountedPrice: p.price || p.discountedPrice,
-              showOnHomePage: p.showOnHomePage || false,
-              images: p.images || ['https://via.placeholder.com/300'],
-              description: p.description,
-              inStock: (p.stock || 0) > 0,
-              rating: p.rating || 0,
-              reviews: p.reviews || 0,
-            }))
-          );
-        }
+        const prodItems = Array.isArray(productsData) ? productsData : productsData.items || [];
+        setProducts(
+          prodItems.map((p: any) => ({
+            id: p.id || p._id,
+            name: p.title || p.name,
+            categoryId: p.categoryId,
+            subcategoryId: p.subcategoryId,
+            originalPrice: p.price || p.originalPrice,
+            discountedPrice: p.price || p.discountedPrice || p.price,
+            showOnHomePage: p.showOnHomePage || false,
+            images: p.images || ['https://via.placeholder.com/300'],
+            description: p.description,
+            inStock: (p.stock || 0) > 0,
+            rating: p.rating || 0,
+            reviews: p.reviews || 0,
+          }))
+        );
       } catch (err) {
         console.error('Failed to load products:', err);
-        setError('Failed to load products. Using mock data as fallback.');
-        // Fallback to mock data
-        setProducts(
-          categories
-            .filter(c => selectedCategory === 'all' || c.id === selectedCategory)
-            .map(c => ({
-              id: `${c.id}-product`,
-              name: `${c.name} Product`,
-              categoryId: c.id,
-              subcategoryId: 'default',
-              originalPrice: 5000,
-              discountedPrice: 3999,
-              showOnHomePage: false,
-              images: [c.image],
-              description: c.description,
-              inStock: true,
-              rating: 4.5,
-              reviews: 10,
-            }))
-        );
+        setError('Failed to load products.');
+        setProducts([]);
       } finally {
         setIsLoading(false);
       }

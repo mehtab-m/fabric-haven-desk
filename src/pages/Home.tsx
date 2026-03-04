@@ -4,12 +4,12 @@ import { ArrowRight, Truck, Shield, HeadphonesIcon, RefreshCw } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
-import { products as mockProducts, categories as mockCategories, Product } from '@/services/mockData';
+import { Product, Category } from '@/services/mockData';
 import { productAPI, categoryAPI } from '@/services/api';
 
 const Home: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [categories, setCategories] = useState<any[]>(mockCategories);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,60 +18,37 @@ const Home: React.FC = () => {
         setIsLoading(true);
 
         // Load featured products
-        try {
-          const productsData = await productAPI.getAll();
-          if (Array.isArray(productsData)) {
-            setProducts(
-              productsData.map((p: any) => ({
-                id: p.id || p._id,
-                name: p.title || p.name,
-                categoryId: p.categoryId,
-                subcategoryId: p.subcategoryId,
-                originalPrice: p.price || p.originalPrice,
-                discountedPrice: p.price || p.discountedPrice,
-                showOnHomePage: p.showOnHomePage || false,
-                images: p.images || ['https://via.placeholder.com/300'],
-                description: p.description,
-                inStock: (p.stock || 0) > 0,
-                rating: p.rating || 0,
-                reviews: p.reviews || 0,
-              }))
-            );
-          } else if (productsData.items) {
-            setProducts(
-              productsData.items.map((p: any) => ({
-                id: p.id || p._id,
-                name: p.title || p.name,
-                categoryId: p.categoryId,
-                subcategoryId: p.subcategoryId,
-                originalPrice: p.price || p.originalPrice,
-                discountedPrice: p.price || p.discountedPrice,
-                showOnHomePage: p.showOnHomePage || false,
-                images: p.images || ['https://via.placeholder.com/300'],
-                description: p.description,
-                inStock: (p.stock || 0) > 0,
-                rating: p.rating || 0,
-                reviews: p.reviews || 0,
-              }))
-            );
-          }
-        } catch (err) {
-          console.error('Failed to load products:', err);
-          setProducts(mockProducts);
-        }
+        const productsData = await productAPI.getAll();
+        const items = Array.isArray(productsData) ? productsData : productsData.items || [];
+        setProducts(
+          items.map((p: any) => ({
+            id: p.id || p._id,
+            name: p.title || p.name,
+            categoryId: p.categoryId,
+            subcategoryId: p.subcategoryId,
+            originalPrice: p.price || p.originalPrice,
+            discountedPrice: p.price || p.discountedPrice || p.price,
+            showOnHomePage: p.showOnHomePage || false,
+            images: p.images || ['https://via.placeholder.com/300'],
+            description: p.description,
+            inStock: (p.stock || 0) > 0,
+            rating: p.rating || 0,
+            reviews: p.reviews || 0,
+          }))
+        );
 
         // Load categories
-        try {
-          const categoriesData = await categoryAPI.getAll();
-          if (Array.isArray(categoriesData)) {
-            setCategories(categoriesData);
-          } else if (categoriesData.items) {
-            setCategories(categoriesData.items);
-          }
-        } catch (err) {
-          console.error('Failed to load categories:', err);
-          setCategories(mockCategories);
-        }
+        const categoriesData = await categoryAPI.getAll();
+        const catItems = Array.isArray(categoriesData) ? categoriesData : categoriesData.items || [];
+        setCategories(
+          catItems.map((c: any) => ({
+            id: c._id || c.id,
+            name: c.name,
+            slug: c.slug,
+            image: c.image,
+            description: (c as any).description || '',
+          }))
+        );
       } finally {
         setIsLoading(false);
       }

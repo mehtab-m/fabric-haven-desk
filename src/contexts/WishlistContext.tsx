@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Product } from '@/services/mockData';
 import { useAuth } from './AuthContext';
+import { wishlistAPI } from '@/services/api';
 
 interface WishlistContextType {
   items: Product[];
@@ -14,7 +15,41 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<Product[]>([]);
-  const { isAuthenticated, setShowAuthModal, setAuthModalMode } = useAuth();
+  const { isAuthenticated, setShowAuthModal, setAuthModalMode, user } = useAuth();
+
+  // Load wishlist from backend when user logs in
+  useEffect(() => {
+    const loadWishlist = async () => {
+      try {
+        const data = await wishlistAPI.getAll();
+        const list = (data as any).items || [];
+        const mapped: Product[] = list.map((p: any) => ({
+          id: p._id || p.id,
+          name: p.title || p.name,
+          categoryId: p.categoryId,
+          subcategoryId: p.subcategoryId,
+          originalPrice: p.price,
+          discountedPrice: p.price,
+          showOnHomePage: p.showOnHomePage || false,
+          images: p.images || ['https://via.placeholder.com/300'],
+          description: p.description,
+          inStock: (p.stock || 0) > 0,
+          rating: p.rating || 0,
+          reviews: p.reviews || 0,
+        }));
+        setItems(mapped);
+      } catch (error) {
+        console.error('Failed to load wishlist', error);
+        setItems([]);
+      }
+    };
+
+    if (isAuthenticated && user) {
+      loadWishlist();
+    } else {
+      setItems([]);
+    }
+  }, [isAuthenticated, user]);
 
   const addToWishlist = (product: Product) => {
     if (!isAuthenticated) {
@@ -23,16 +58,55 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
       return;
     }
 
-    setItems((prev) => {
-      if (prev.find((item) => item.id === product.id)) {
-        return prev;
-      }
-      return [...prev, product];
-    });
+    wishlistAPI
+      .add({ productId: product.id })
+      .then((data: any) => {
+        const list = data.items || [];
+        const mapped: Product[] = list.map((p: any) => ({
+          id: p._id || p.id,
+          name: p.title || p.name,
+          categoryId: p.categoryId,
+          subcategoryId: p.subcategoryId,
+          originalPrice: p.price,
+          discountedPrice: p.price,
+          showOnHomePage: p.showOnHomePage || false,
+          images: p.images || ['https://via.placeholder.com/300'],
+          description: p.description,
+          inStock: (p.stock || 0) > 0,
+          rating: p.rating || 0,
+          reviews: p.reviews || 0,
+        }));
+        setItems(mapped);
+      })
+      .catch((error) => {
+        console.error('Failed to add to wishlist', error);
+      });
   };
 
   const removeFromWishlist = (productId: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== productId));
+    wishlistAPI
+      .remove(productId)
+      .then((data: any) => {
+        const list = data.items || [];
+        const mapped: Product[] = list.map((p: any) => ({
+          id: p._id || p.id,
+          name: p.title || p.name,
+          categoryId: p.categoryId,
+          subcategoryId: p.subcategoryId,
+          originalPrice: p.price,
+          discountedPrice: p.price,
+          showOnHomePage: p.showOnHomePage || false,
+          images: p.images || ['https://via.placeholder.com/300'],
+          description: p.description,
+          inStock: (p.stock || 0) > 0,
+          rating: p.rating || 0,
+          reviews: p.reviews || 0,
+        }));
+        setItems(mapped);
+      })
+      .catch((error) => {
+        console.error('Failed to remove from wishlist', error);
+      });
   };
 
   const isInWishlist = (productId: string) => {

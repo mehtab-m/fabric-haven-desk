@@ -1,15 +1,92 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { analyticsData } from '@/services/mockData';
+import { adminAPI, orderAPI, productAPI } from '@/services/api';
 
 const COLORS = ['#4f6d7a', '#7a9e7e', '#c9b896', '#d4a574', '#8b7355'];
 
 const AdminAnalytics: React.FC = () => {
+  const [totalRevenue, setTotalRevenue] = React.useState(0);
+  const [totalOrders, setTotalOrders] = React.useState(0);
+  const [totalCustomers, setTotalCustomers] = React.useState(0);
+  const [wishlistCount, setWishlistCount] = React.useState(0);
+  const [monthlyRevenue, setMonthlyRevenue] = React.useState<{ month: string; revenue: number }[]>([]);
+  const [topProducts, setTopProducts] = React.useState<{ name: string; sales: number }[]>([]);
+  const [ordersByStatus, setOrdersByStatus] = React.useState<{ pending: number; shipped: number; delivered: number; cancelled: number }>({
+    pending: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  });
+
+  React.useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        const [ordersData, productsData, usersData] = await Promise.all([
+          orderAPI.getAll(),
+          productAPI.getAll(),
+          adminAPI.getUsers(),
+        ]);
+
+        const orders = Array.isArray(ordersData) ? ordersData : ordersData.items || [];
+        const products = Array.isArray(productsData) ? productsData : productsData.items || [];
+        const users = Array.isArray(usersData) ? usersData : usersData.items || [];
+
+        setTotalOrders(orders.length);
+        setTotalRevenue(orders.reduce((sum: number, o: any) => sum + (o.total || 0), 0));
+
+        const customerUsers = users.filter((u: any) => (u.role || 'user') === 'user');
+        setTotalCustomers(customerUsers.length);
+        setWishlistCount(customerUsers.reduce((sum: number, u: any) => sum + ((u.wishlist || []).length || 0), 0));
+
+        const statusCounts = orders.reduce(
+          (acc: any, o: any) => {
+            const status = String(o.status || 'pending').toLowerCase();
+            if (acc[status] !== undefined) acc[status] += 1;
+            return acc;
+          },
+          { pending: 0, shipped: 0, delivered: 0, cancelled: 0 }
+        );
+        setOrdersByStatus(statusCounts);
+
+        const monthlyMap = new Map<string, number>();
+        orders.forEach((o: any) => {
+          const date = o.createdAt ? new Date(o.createdAt) : new Date();
+          const month = date.toLocaleString('default', { month: 'short' });
+          monthlyMap.set(month, (monthlyMap.get(month) || 0) + (o.total || 0));
+        });
+        setMonthlyRevenue(Array.from(monthlyMap.entries()).map(([month, revenue]) => ({ month, revenue })));
+
+        const productNameById = new Map<string, string>();
+        products.forEach((p: any) => productNameById.set(String(p._id || p.id), p.title || p.name));
+
+        const salesByProduct = new Map<string, number>();
+        orders.forEach((o: any) => {
+          (o.items || []).forEach((it: any) => {
+            const pid = String(it.product || it.productId);
+            salesByProduct.set(pid, (salesByProduct.get(pid) || 0) + (it.quantity || 0));
+          });
+        });
+
+        const top = Array.from(salesByProduct.entries())
+          .map(([id, sales]) => ({ id, sales }))
+          .sort((a, b) => b.sales - a.sales)
+          .slice(0, 8)
+          .map((x) => ({ name: productNameById.get(x.id) || 'Product', sales: x.sales }));
+
+        setTopProducts(top);
+      } catch (error) {
+        console.error('Failed to load analytics', error);
+      }
+    };
+
+    loadAnalytics();
+  }, []);
+
   const pieData = [
-    { name: 'Pending', value: analyticsData.ordersByStatus.pending },
-    { name: 'Shipped', value: analyticsData.ordersByStatus.shipped },
-    { name: 'Delivered', value: analyticsData.ordersByStatus.delivered },
-    { name: 'Cancelled', value: analyticsData.ordersByStatus.cancelled },
+    { name: 'Pending', value: ordersByStatus.pending },
+    { name: 'Shipped', value: ordersByStatus.shipped },
+    { name: 'Delivered', value: ordersByStatus.delivered },
+    { name: 'Cancelled', value: ordersByStatus.cancelled },
   ];
 
   return (
@@ -20,19 +97,19 @@ const AdminAnalytics: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card rounded-xl shadow-elegant p-6">
           <p className="text-sm text-muted-foreground">Total Revenue</p>
-          <p className="text-2xl font-bold mt-1">₨ {analyticsData.totalRevenue.toLocaleString()}</p>
+          <p className="text-2xl font-bold mt-1">₨ {totalRevenue.toLocaleString()}</p>
         </div>
         <div className="bg-card rounded-xl shadow-elegant p-6">
           <p className="text-sm text-muted-foreground">Total Orders</p>
-          <p className="text-2xl font-bold mt-1">{analyticsData.totalOrders}</p>
+          <p className="text-2xl font-bold mt-1">{totalOrders}</p>
         </div>
         <div className="bg-card rounded-xl shadow-elegant p-6">
           <p className="text-sm text-muted-foreground">Total Customers</p>
-          <p className="text-2xl font-bold mt-1">{analyticsData.totalCustomers}</p>
+          <p className="text-2xl font-bold mt-1">{totalCustomers}</p>
         </div>
         <div className="bg-card rounded-xl shadow-elegant p-6">
           <p className="text-sm text-muted-foreground">Wishlist Items</p>
-          <p className="text-2xl font-bold mt-1">{analyticsData.wishlistCount}</p>
+          <p className="text-2xl font-bold mt-1">{wishlistCount}</p>
         </div>
       </div>
 
@@ -41,7 +118,7 @@ const AdminAnalytics: React.FC = () => {
         <h3 className="font-display text-lg font-bold mb-6">Monthly Revenue Trend</h3>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={analyticsData.monthlyRevenue}>
+            <LineChart data={monthlyRevenue}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
               <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -64,7 +141,7 @@ const AdminAnalytics: React.FC = () => {
           <h3 className="font-display text-lg font-bold mb-6">Top Selling Products</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analyticsData.topProducts} layout="vertical">
+              <BarChart data={topProducts} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
                 <YAxis dataKey="name" type="category" width={120} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />

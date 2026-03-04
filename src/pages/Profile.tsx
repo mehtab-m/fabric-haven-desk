@@ -4,18 +4,49 @@ import { User, ShoppingBag, Heart, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { orders } from '@/services/mockData';
+import { Order } from '@/services/mockData';
+import { orderAPI } from '@/services/api';
 
 const Profile: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { items: wishlistItems } = useWishlist();
+  const [userOrders, setUserOrders] = React.useState<Order[]>([]);
+
+  React.useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const data = await orderAPI.getAll();
+        const items = Array.isArray(data) ? data : data.items || [];
+        const mapped: Order[] = items
+          .filter((o: any) => !user || (o.userId?._id || o.userId)?.toString() === user.id)
+          .map((o: any) => ({
+            id: o._id || o.id,
+            customerId: o.userId?._id || o.userId,
+            customerName: o.userId?.name || user?.name || 'You',
+            products: (o.items || []).map((i: any) => ({
+              productId: i.product || i.productId,
+              quantity: i.quantity,
+              price: i.price,
+            })),
+            total: o.total,
+            status: String(o.status || 'pending').toLowerCase() as Order['status'],
+            orderDate: o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '',
+            address: o.shipping?.address || '',
+          }));
+        setUserOrders(mapped.slice(0, 3));
+      } catch (error) {
+        console.error('Failed to load user orders', error);
+      }
+    };
+
+    if (isAuthenticated) {
+      loadOrders();
+    }
+  }, [isAuthenticated, user]);
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
-
-  // Mock user orders
-  const userOrders = orders.slice(0, 3);
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">

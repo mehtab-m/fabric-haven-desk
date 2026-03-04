@@ -1,17 +1,40 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { categories as initialCategories, Category } from '@/services/mockData';
+import { Category } from '@/services/mockData';
+import { categoryAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const AdminCategories: React.FC = () => {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', image: '' });
+
+  // Load categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryAPI.getAll();
+        const mapped = (data as any[]).map((c) => ({
+          id: c._id || c.id,
+          name: c.name,
+          slug: c.slug,
+          image: c.image,
+          description: (c as any).description || '',
+        })) as Category[];
+        setCategories(mapped);
+      } catch (error: any) {
+        console.error('Failed to load categories', error);
+        toast({ title: 'Failed to load categories', description: error.message, variant: 'destructive' });
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const openAddModal = () => {
     setEditingCategory(null);
@@ -25,32 +48,60 @@ const AdminCategories: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingCategory) {
-      setCategories(categories.map(c => 
-        c.id === editingCategory.id 
-          ? { ...c, ...formData, slug: formData.name.toLowerCase().replace(/\s+/g, '-') }
-          : c
-      ));
-      toast({ title: 'Category updated successfully' });
-    } else {
-      const newCategory: Category = {
-        id: `cat-${Date.now()}`,
-        name: formData.name,
-        slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-        description: formData.description,
-        image: formData.image || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80'
-      };
-      setCategories([...categories, newCategory]);
-      toast({ title: 'Category added successfully' });
+    try {
+      if (editingCategory) {
+        const updated = await categoryAPI.update(editingCategory.id, {
+          name: formData.name,
+          image: formData.image,
+          description: formData.description,
+        });
+
+        const updatedCategory: Category = {
+          id: (updated as any)._id || (updated as any).id,
+          name: updated.name,
+          slug: updated.slug,
+          image: updated.image,
+          description: (updated as any).description || '',
+        };
+
+        setCategories(categories.map((c) => (c.id === editingCategory.id ? updatedCategory : c)));
+        toast({ title: 'Category updated successfully' });
+      } else {
+        const created = await categoryAPI.create({
+          name: formData.name,
+          image: formData.image,
+          description: formData.description,
+        });
+
+        const newCategory: Category = {
+          id: (created as any)._id || (created as any).id,
+          name: created.name,
+          slug: created.slug,
+          description: formData.description,
+          image: created.image,
+        };
+
+        setCategories([...categories, newCategory]);
+        toast({ title: 'Category added successfully' });
+      }
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Failed to save category', error);
+      toast({ title: 'Failed to save category', description: error.message, variant: 'destructive' });
     }
-    setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setCategories(categories.filter(c => c.id !== id));
-    toast({ title: 'Category deleted successfully' });
+  const handleDelete = async (id: string) => {
+    try {
+      await categoryAPI.delete(id);
+      setCategories(categories.filter(c => c.id !== id));
+      toast({ title: 'Category deleted successfully' });
+    } catch (error: any) {
+      console.error('Failed to delete category', error);
+      toast({ title: 'Failed to delete category', description: error.message, variant: 'destructive' });
+    }
   };
 
   return (

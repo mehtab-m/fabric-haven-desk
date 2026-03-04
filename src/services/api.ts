@@ -134,7 +134,7 @@ export const categoryAPI = {
       method: 'GET',
     }),
 
-  create: (data: { name: string; slug?: string; image: string }) =>
+  create: (data: { name: string; slug?: string; image: string; description?: string }) =>
     apiRequest('/categories', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -205,19 +205,58 @@ export const cartAPI = {
 // ===== ORDER ENDPOINTS =====
 export const orderAPI = {
   create: (data: any) =>
-    apiRequest('/create-order', {
+    apiRequest('/orders/create-order', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   getById: (id: string) =>
-    apiRequest(`/${id}`, {
+    apiRequest(`/orders/${id}`, {
       method: 'GET',
     }),
 
   getAll: () =>
-    apiRequest('/', {
+    apiRequest('/orders', {
       method: 'GET',
+    }),
+
+  updateStatus: (id: string, status: 'pending' | 'shipped' | 'delivered' | 'cancelled') =>
+    apiRequest(`/orders/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
+};
+
+// ===== WISHLIST ENDPOINTS =====
+export const wishlistAPI = {
+  getAll: () =>
+    apiRequest('/wishlist', {
+      method: 'GET',
+    }),
+
+  add: (data: { productId: string }) =>
+    apiRequest('/wishlist', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  remove: (productId: string) =>
+    apiRequest(`/wishlist/${productId}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ===== ADMIN ENDPOINTS =====
+export const adminAPI = {
+  getUsers: () =>
+    apiRequest('/admin/users', {
+      method: 'GET',
+    }),
+
+  createUser: (data: { name: string; email: string; phone?: string; password: string; role?: 'user' | 'admin' }) =>
+    apiRequest('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
     }),
 };
 
@@ -228,4 +267,6 @@ export default {
   subcategoryAPI,
   cartAPI,
   orderAPI,
+  wishlistAPI,
+  adminAPI,
 };

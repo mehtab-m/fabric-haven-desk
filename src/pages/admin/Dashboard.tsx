@@ -1,7 +1,8 @@
 import React from 'react';
-import { Package, Users, ShoppingBag, Heart, TrendingUp, DollarSign } from 'lucide-react';
+import { Package, Users, ShoppingBag, TrendingUp, DollarSign } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { analyticsData, orders } from '@/services/mockData';
+import { Order } from '@/services/mockData';
+import { orderAPI, productAPI } from '@/services/api';
 
 const StatCard: React.FC<{
   title: string;
@@ -32,13 +33,85 @@ const StatCard: React.FC<{
 const COLORS = ['#d4a574', '#7a9e7e', '#c9b896', '#8b7355'];
 
 const AdminDashboard: React.FC = () => {
-  const recentOrders = orders.slice(0, 5);
-  
+  const [recentOrders, setRecentOrders] = React.useState<Order[]>([]);
+  const [totalRevenue, setTotalRevenue] = React.useState(0);
+  const [totalOrders, setTotalOrders] = React.useState(0);
+  const [totalProducts, setTotalProducts] = React.useState(0);
+  const [totalCustomers, setTotalCustomers] = React.useState(0);
+  const [monthlyRevenue, setMonthlyRevenue] = React.useState<{ month: string; revenue: number }[]>([]);
+  const [ordersByStatus, setOrdersByStatus] = React.useState<{
+    pending: number;
+    shipped: number;
+    delivered: number;
+    cancelled: number;
+  }>({
+    pending: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  });
+
+  React.useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        const [ordersData, productsData] = await Promise.all([orderAPI.getAll(), productAPI.getAll()]);
+        const orderItems = Array.isArray(ordersData) ? ordersData : ordersData.items || [];
+        const mappedOrders: Order[] = orderItems.map((o: any) => ({
+          id: o._id || o.id,
+          customerId: o.userId?._id || o.userId,
+          customerName: o.userId?.name || 'Customer',
+          products: (o.items || []).map((i: any) => ({
+            productId: i.product || i.productId,
+            quantity: i.quantity,
+            price: i.price,
+          })),
+          total: o.total,
+          status: String(o.status || 'pending').toLowerCase() as Order['status'],
+          orderDate: o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '',
+          address: o.shipping?.address || '',
+        }));
+
+        setRecentOrders(mappedOrders.slice(0, 5));
+        setTotalOrders(mappedOrders.length);
+        setTotalRevenue(mappedOrders.reduce((sum, o) => sum + o.total, 0));
+
+        const customerIds = new Set(mappedOrders.map((o) => o.customerId));
+        setTotalCustomers(customerIds.size);
+
+        const productItems = Array.isArray(productsData) ? productsData : productsData.items || [];
+        setTotalProducts(productItems.length);
+
+        const statusCounts = mappedOrders.reduce(
+          (acc, o) => {
+            acc[o.status] = (acc[o.status] || 0) + 1;
+            return acc;
+          },
+          { pending: 0, shipped: 0, delivered: 0, cancelled: 0 } as any
+        );
+        setOrdersByStatus(statusCounts);
+
+        const monthlyMap = new Map<string, number>();
+        mappedOrders.forEach((o) => {
+          const date = o.orderDate ? new Date(o.orderDate) : new Date();
+          const month = date.toLocaleString('default', { month: 'short' });
+          monthlyMap.set(month, (monthlyMap.get(month) || 0) + o.total);
+        });
+        setMonthlyRevenue(
+          Array.from(monthlyMap.entries()).map(([month, revenue]) => ({ month, revenue }))
+        );
+      } catch (error) {
+        console.error('Failed to load dashboard analytics', error);
+      }
+    };
+
+    loadAnalytics();
+  }, []);
+
   const pieData = [
-    { name: 'Pending', value: analyticsData.ordersByStatus.pending },
-    { name: 'Shipped', value: analyticsData.ordersByStatus.shipped },
-    { name: 'Delivered', value: analyticsData.ordersByStatus.delivered },
-    { name: 'Cancelled', value: analyticsData.ordersByStatus.cancelled },
+    { name: 'Pending', value: ordersByStatus.pending },
+    { name: 'Shipped', value: ordersByStatus.shipped },
+    { name: 'Delivered', value: ordersByStatus.delivered },
+    { name: 'Cancelled', value: ordersByStatus.cancelled },
   ];
 
   return (
@@ -47,27 +120,27 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Revenue"
-          value={`₨ ${analyticsData.totalRevenue.toLocaleString()}`}
+          value={`₨ ${totalRevenue.toLocaleString()}`}
           icon={DollarSign}
           trend="+12.5% from last month"
           color="bg-primary/10 text-primary"
         />
         <StatCard
           title="Total Products"
-          value={analyticsData.totalProducts}
+          value={totalProducts}
           icon={Package}
           color="bg-accent/20 text-accent"
         />
         <StatCard
           title="Total Orders"
-          value={analyticsData.totalOrders}
+          value={totalOrders}
           icon={ShoppingBag}
           trend="+8.2% from last month"
           color="bg-blue-100 text-blue-600"
         />
         <StatCard
           title="Total Customers"
-          value={analyticsData.totalCustomers}
+          value={totalCustomers}
           icon={Users}
           color="bg-purple-100 text-purple-600"
         />
@@ -80,7 +153,7 @@ const AdminDashboard: React.FC = () => {
           <h3 className="font-display text-lg font-bold mb-6">Monthly Revenue</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analyticsData.monthlyRevenue}>
+              <BarChart data={monthlyRevenue}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" />

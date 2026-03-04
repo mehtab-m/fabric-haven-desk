@@ -1,15 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { subcategories as initialSubcategories, categories, Subcategory } from '@/services/mockData';
+import { Subcategory, Category } from '@/services/mockData';
+import { categoryAPI, subcategoryAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const AdminSubcategories: React.FC = () => {
-  const [subcategories, setSubcategories] = useState<Subcategory[]>(initialSubcategories);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(null);
   const [formData, setFormData] = useState({ name: '', categoryId: '' });
@@ -17,6 +19,51 @@ const AdminSubcategories: React.FC = () => {
   const getCategoryName = (categoryId: string) => {
     return categories.find(c => c.id === categoryId)?.name || 'Unknown';
   };
+
+  // Load categories and subcategories from backend
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [categoriesData, subcategoriesData] = await Promise.all([
+          categoryAPI.getAll(),
+          subcategoryAPI.getAll(),
+        ]);
+
+        const mappedCategories = (Array.isArray(categoriesData) ? categoriesData : categoriesData.items || []).map(
+          (c: any) =>
+            ({
+              id: c._id || c.id,
+              name: c.name,
+              slug: c.slug,
+              image: c.image,
+              description: (c as any).description || '',
+            } as Category)
+        );
+
+        const mappedSubcategories = (Array.isArray(subcategoriesData) ? subcategoriesData : subcategoriesData.items || []).map(
+          (s: any) =>
+            ({
+              id: s._id || s.id,
+              categoryId: s.categoryId,
+              name: s.name,
+              slug: s.slug,
+            } as Subcategory)
+        );
+
+        setCategories(mappedCategories);
+        setSubcategories(mappedSubcategories);
+      } catch (error: any) {
+        console.error('Failed to load subcategories or categories', error);
+        toast({
+          title: 'Failed to load subcategories',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    };
+
+    loadData();
+  }, []);
 
   const openAddModal = () => {
     setEditingSubcategory(null);
@@ -30,31 +77,64 @@ const AdminSubcategories: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingSubcategory) {
-      setSubcategories(subcategories.map(s => 
-        s.id === editingSubcategory.id 
-          ? { ...s, ...formData, slug: formData.name.toLowerCase().replace(/\s+/g, '-') }
-          : s
-      ));
-      toast({ title: 'Subcategory updated successfully' });
-    } else {
-      const newSubcategory: Subcategory = {
-        id: `sub-${Date.now()}`,
-        name: formData.name,
-        slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-        categoryId: formData.categoryId
-      };
-      setSubcategories([...subcategories, newSubcategory]);
-      toast({ title: 'Subcategory added successfully' });
+    try {
+      if (editingSubcategory) {
+        const updated = await subcategoryAPI.update(editingSubcategory.id, {
+          name: formData.name,
+          categoryId: formData.categoryId,
+        });
+
+        const updatedSubcategory: Subcategory = {
+          id: (updated as any)._id || (updated as any).id,
+          name: updated.name,
+          slug: updated.slug,
+          categoryId: updated.categoryId,
+        };
+
+        setSubcategories(subcategories.map((s) => (s.id === editingSubcategory.id ? updatedSubcategory : s)));
+        toast({ title: 'Subcategory updated successfully' });
+      } else {
+        const created = await subcategoryAPI.create({
+          name: formData.name,
+          categoryId: formData.categoryId,
+        });
+
+        const newSubcategory: Subcategory = {
+          id: (created as any)._id || (created as any).id,
+          name: created.name,
+          slug: created.slug,
+          categoryId: created.categoryId,
+        };
+
+        setSubcategories([...subcategories, newSubcategory]);
+        toast({ title: 'Subcategory added successfully' });
+      }
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Failed to save subcategory', error);
+      toast({
+        title: 'Failed to save subcategory',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
-    setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setSubcategories(subcategories.filter(s => s.id !== id));
-    toast({ title: 'Subcategory deleted successfully' });
+  const handleDelete = async (id: string) => {
+    try {
+      await subcategoryAPI.delete(id);
+      setSubcategories(subcategories.filter(s => s.id !== id));
+      toast({ title: 'Subcategory deleted successfully' });
+    } catch (error: any) {
+      console.error('Failed to delete subcategory', error);
+      toast({
+        title: 'Failed to delete subcategory',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
