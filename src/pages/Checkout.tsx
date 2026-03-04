@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
+import { orderAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const Checkout: React.FC = () => {
@@ -13,20 +14,65 @@ const Checkout: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate order placement
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const orderData = {
+        products: items.map(item => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+          price: item.product.discountedPrice,
+        })),
+        total: totalPrice,
+        shippingAddress: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          street: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zip,
+          phone: formData.phone,
+          email: formData.email,
+        },
+      };
+
+      await orderAPI.create(orderData);
+      
       setOrderPlaced(true);
-      clearCart();
+      await clearCart();
       toast({
         title: "Order Placed Successfully!",
         description: "Thank you for your order. We'll contact you soon.",
       });
-    }, 1500);
+    } catch (error: any) {
+      console.error('Order creation failed:', error);
+      toast({
+        title: "Order Failed",
+        description: error.message || "Failed to place order. Please try again.",
+        variant: "destructive"
+      });
+      setLoading(false);
+    }
   };
 
   if (orderPlaced) {
@@ -83,19 +129,41 @@ const Checkout: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" required />
+                  <Input 
+                    id="firstName" 
+                    required 
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" required />
+                  <Input 
+                    id="lastName" 
+                    required 
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" required />
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    required 
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" type="tel" required />
+                  <Input 
+                    id="phone" 
+                    type="tel" 
+                    required 
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
             </div>
@@ -108,20 +176,40 @@ const Checkout: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="address">Street Address</Label>
-                  <Input id="address" required />
+                  <Input 
+                    id="address" 
+                    required 
+                    value={formData.address}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="city">City</Label>
-                    <Input id="city" required />
+                    <Input 
+                      id="city" 
+                      required 
+                      value={formData.city}
+                      onChange={handleInputChange}
+                    />
                   </div>
                   <div>
                     <Label htmlFor="state">Province</Label>
-                    <Input id="state" required />
+                    <Input 
+                      id="state" 
+                      required 
+                      value={formData.state}
+                      onChange={handleInputChange}
+                    />
                   </div>
                   <div>
                     <Label htmlFor="zip">Postal Code</Label>
-                    <Input id="zip" required />
+                    <Input 
+                      id="zip" 
+                      required 
+                      value={formData.zip}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </div>
               </div>

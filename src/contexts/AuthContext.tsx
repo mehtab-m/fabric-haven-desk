@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { authAPI } from '@/services/api';
 
 interface User {
   id: string;
@@ -11,75 +12,97 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  login: (email: string, password: string) => { success: boolean; error?: string };
-  signup: (name: string, email: string, password: string) => { success: boolean; error?: string };
-  logout: () => void;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
   showAuthModal: boolean;
   setShowAuthModal: (show: boolean) => void;
   authModalMode: 'login' | 'signup';
   setAuthModalMode: (mode: 'login' | 'signup') => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Mock credentials
-const ADMIN_EMAIL = 'zmhomefabrics@gmail.com';
-const ADMIN_PASSWORD = 'zmhomefabrics@123';
-const USER_EMAIL = 'mehtayaseen@gmail.com';
-const USER_PASSWORD = 'mehtayaseen@123';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const login = (email: string, password: string) => {
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      setUser({
-        id: 'admin-1',
-        email: ADMIN_EMAIL,
-        name: 'ZM Admin',
-        role: 'admin'
-      });
+  // Load user from localStorage on mount
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const storedUser = localStorage.getItem('user');
+    if (token && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Failed to parse stored user:', error);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+      }
+    }
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const response = await authAPI.login({ email, password });
+      const userData: User = {
+        id: response.user.id,
+        email: response.user.email,
+        name: response.user.name,
+        role: response.user.role,
+      };
+      
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
       setShowAuthModal(false);
       return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Login failed' };
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    if (email === USER_EMAIL && password === USER_PASSWORD) {
-      setUser({
-        id: 'user-1',
-        email: USER_EMAIL,
-        name: 'Yaseen Mehta',
-        role: 'user'
-      });
+  const signup = async (name: string, email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const response = await authAPI.register({ name, email, password });
+      const userData: User = {
+        id: response.user.id,
+        email: response.user.email,
+        name: response.user.name,
+        role: response.user.role,
+      };
+      
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
       setShowAuthModal(false);
       return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Signup failed' };
+    } finally {
+      setIsLoading(false);
     }
-
-    return { success: false, error: 'Invalid email or password' };
   };
 
-  const signup = (name: string, email: string, password: string) => {
-    if (email === ADMIN_EMAIL || email === USER_EMAIL) {
-      return { success: false, error: 'Email already exists' };
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+    } finally {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsLoading(false);
     }
-
-    if (password.length < 6) {
-      return { success: false, error: 'Password must be at least 6 characters' };
-    }
-
-    setUser({
-      id: `user-${Date.now()}`,
-      email,
-      name,
-      role: 'user'
-    });
-    setShowAuthModal(false);
-    return { success: true };
-  };
-
-  const logout = () => {
-    setUser(null);
   };
 
   return (
@@ -94,7 +117,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         showAuthModal,
         setShowAuthModal,
         authModalMode,
-        setAuthModalMode
+        setAuthModalMode,
+        isLoading
       }}
     >
       {children}

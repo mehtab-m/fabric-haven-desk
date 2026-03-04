@@ -1,12 +1,85 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Shield, HeadphonesIcon, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
-import { products, categories } from '@/services/mockData';
+import { products as mockProducts, categories as mockCategories, Product } from '@/services/mockData';
+import { productAPI, categoryAPI } from '@/services/api';
 
 const Home: React.FC = () => {
+  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [categories, setCategories] = useState<any[]>(mockCategories);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Load featured products
+        try {
+          const productsData = await productAPI.getAll();
+          if (Array.isArray(productsData)) {
+            setProducts(
+              productsData.map((p: any) => ({
+                id: p.id || p._id,
+                name: p.title || p.name,
+                categoryId: p.categoryId,
+                subcategoryId: p.subcategoryId,
+                originalPrice: p.price || p.originalPrice,
+                discountedPrice: p.price || p.discountedPrice,
+                showOnHomePage: p.showOnHomePage || false,
+                images: p.images || ['https://via.placeholder.com/300'],
+                description: p.description,
+                inStock: (p.stock || 0) > 0,
+                rating: p.rating || 0,
+                reviews: p.reviews || 0,
+              }))
+            );
+          } else if (productsData.items) {
+            setProducts(
+              productsData.items.map((p: any) => ({
+                id: p.id || p._id,
+                name: p.title || p.name,
+                categoryId: p.categoryId,
+                subcategoryId: p.subcategoryId,
+                originalPrice: p.price || p.originalPrice,
+                discountedPrice: p.price || p.discountedPrice,
+                showOnHomePage: p.showOnHomePage || false,
+                images: p.images || ['https://via.placeholder.com/300'],
+                description: p.description,
+                inStock: (p.stock || 0) > 0,
+                rating: p.rating || 0,
+                reviews: p.reviews || 0,
+              }))
+            );
+          }
+        } catch (err) {
+          console.error('Failed to load products:', err);
+          setProducts(mockProducts);
+        }
+
+        // Load categories
+        try {
+          const categoriesData = await categoryAPI.getAll();
+          if (Array.isArray(categoriesData)) {
+            setCategories(categoriesData);
+          } else if (categoriesData.items) {
+            setCategories(categoriesData.items);
+          }
+        } catch (err) {
+          console.error('Failed to load categories:', err);
+          setCategories(mockCategories);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
   const featuredProducts = products.filter((p) => p.showOnHomePage);
 
   return (

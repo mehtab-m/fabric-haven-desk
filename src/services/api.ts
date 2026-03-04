@@ -1,0 +1,231 @@
+// API Service for Backend Communication
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Utility function to get token from localStorage
+const getToken = () => {
+  return localStorage.getItem('authToken');
+};
+
+// Utility function for API requests
+const apiRequest = async <T = any>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  // Add auth token if available
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `API Error: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+// ===== AUTH ENDPOINTS =====
+export const authAPI = {
+  register: (data: { name: string; email: string; password: string }) =>
+    apiRequest('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  login: (data: { email: string; password: string }) =>
+    apiRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  logout: () =>
+    apiRequest('/auth/logout', {
+      method: 'POST',
+    }),
+
+  getProfile: () =>
+    apiRequest('/auth/me', {
+      method: 'GET',
+    }),
+
+  forgotPassword: (data: { email: string }) =>
+    apiRequest('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  verifyPin: (data: { email: string; pin: string }) =>
+    apiRequest('/auth/verify-pin', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  resetPassword: (data: { email: string; newPassword: string; pin: string }) =>
+    apiRequest('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
+// ===== PRODUCTS ENDPOINTS =====
+interface ProductsQueryParams {
+  page?: number;
+  limit?: number;
+  category?: string;
+  subcategory?: string;
+  q?: string;
+  sort?: string;
+}
+
+export const productAPI = {
+  getAll: (params?: ProductsQueryParams) => {
+    const queryString = params
+      ? '?' + new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()
+      : '';
+    return apiRequest(`/products${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  getById: (id: string) =>
+    apiRequest(`/products/${id}`, {
+      method: 'GET',
+    }),
+
+  create: (data: any) =>
+    apiRequest('/products', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: any) =>
+    apiRequest(`/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    apiRequest(`/products/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ===== CATEGORIES ENDPOINTS =====
+export const categoryAPI = {
+  getAll: () =>
+    apiRequest('/categories', {
+      method: 'GET',
+    }),
+
+  getById: (id: string) =>
+    apiRequest(`/categories/${id}`, {
+      method: 'GET',
+    }),
+
+  create: (data: { name: string; slug?: string; image: string }) =>
+    apiRequest('/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: any) =>
+    apiRequest(`/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    apiRequest(`/categories/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ===== SUBCATEGORIES ENDPOINTS =====
+export const subcategoryAPI = {
+  getAll: () =>
+    apiRequest('/subcategories', {
+      method: 'GET',
+    }),
+
+  create: (data: { name: string; categoryId: string }) =>
+    apiRequest('/subcategories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: any) =>
+    apiRequest(`/subcategories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    apiRequest(`/subcategories/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ===== CART ENDPOINTS =====
+export const cartAPI = {
+  getCart: () =>
+    apiRequest('/cart', {
+      method: 'GET',
+    }),
+
+  addItem: (data: { productId: string; quantity: number }) =>
+    apiRequest('/cart', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateItem: (itemId: string, data: { quantity: number }) =>
+    apiRequest(`/cart/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteItem: (itemId: string) =>
+    apiRequest(`/cart/items/${itemId}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ===== ORDER ENDPOINTS =====
+export const orderAPI = {
+  create: (data: any) =>
+    apiRequest('/create-order', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getById: (id: string) =>
+    apiRequest(`/${id}`, {
+      method: 'GET',
+    }),
+
+  getAll: () =>
+    apiRequest('/', {
+      method: 'GET',
+    }),
+};
+
+export default {
+  authAPI,
+  productAPI,
+  categoryAPI,
+  subcategoryAPI,
+  cartAPI,
+  orderAPI,
+};

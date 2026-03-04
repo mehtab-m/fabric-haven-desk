@@ -1,66 +1,175 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Product } from '@/services/mockData';
 import { useAuth } from './AuthContext';
+import { cartAPI, productAPI } from '@/services/api';
 
 interface CartItem {
+  id?: string; // Backend cart item ID
   product: Product;
   quantity: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
+  addToCart: (product: Product) => Promise<void>;
+  removeFromCart: (productId: string) => Promise<void>;
+  updateQuantity: (productId: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   totalItems: number;
   totalPrice: number;
+  isLoading: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const { isAuthenticated, setShowAuthModal, setAuthModalMode } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { isAuthenticated, setShowAuthModal, setAuthModalMode, user } = useAuth();
 
-  const addToCart = (product: Product) => {
+  // Load cart from backend when user logs in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadCart();
+    } else {
+      setItems([]);
+    }
+  }, [isAuthenticated, user]);
+
+  const loadCart = async () => {
+    try {
+      setIsLoading(true);
+      const response = await cartAPI.getCart();
+      if (response.items && Array.isArray(response.items)) {
+        // Map backend cart items to frontend format
+        const mappedItems = await Promise.all(
+          response.items.map(async (item: any) => {
+            try {
+              const product = await productAPI.getById(item.productId);
+              return {
+                id: item.id || item._id,
+                product: {
+                  id: product.id,
+                  name: product.title || product.name,
+                  categoryId: product.categoryId,
+                  subcategoryId: product.subcategoryId,
+                  originalPrice: product.price,
+                  discountedPrice: product.price,
+                  showOnHomePage: false,
+                  images: product.images || ['https://via.placeholder.com/300'],
+                  description: product.description,
+                  inStock: product.stock > 0,
+                  rating: 0,
+                  reviews: 0,
+                } as Product,
+                quantity: item.quantity,
+              };
+            } catch (error) {
+              console.error('Failed to load product:', error);
+              return null;
+            }
+          })
+        );
+        setItems(mappedItems.filter(Boolean) as CartItem[]);
+      }
+    } catch (error) {
+      console.error('Failed to load cart:', error);
+      // Fallback to empty cart
+      setItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addToCart = async (product: Product) => {
     if (!isAuthenticated) {
       setAuthModalMode('login');
       setShowAuthModal(true);
       return;
     }
 
-    setItems((prev) => {
-      const existingItem = prev.find((item) => item.product.id === product.id);
-      if (existingItem) {
-        return prev.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+    try {
+      setIsLoading(true);
+      const response = await cartAPI.addItem({
+        productId: product.id,
+        quantity: 1,
+      });
+
+      // Update local state
+      setItems((prev) => {
+        const existingItem = prev.find((item) => item.product.id === product.id);
+        if (existingItem) {
+          return prev.map((item) =>
+            item.product.id === product.id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
+        }
+        return [...prev, { id: response.id, product, quantity: 1 }];
+      });
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const removeFromCart = async (productId: string) => {
+    try {
+      setIsLoading(true);
+      const item = items.find((item) => item.product.id === productId);
+      if (item?.id) {
+        await cartAPI.deleteItem(item.id);
       }
-      return [...prev, { product, quantity: 1 }];
-    });
+      setItems((prev) => prev.filter((item) => item.product.id !== productId));
+    } catch (error) {
+      console.error('Failed to remove from cart:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const removeFromCart = (productId: string) => {
-    setItems((prev) => prev.filter((item) => item.product.id !== productId));
-  };
-
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = async (productId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      await removeFromCart(productId);
       return;
     }
-    setItems((prev) =>
-      prev.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
-      )
-    );
+
+    try {
+      setIsLoading(true);
+      const item = items.find((item) => item.product.id === productId);
+      if (item?.id) {
+        await cartAPI.updateItem(item.id, { quantity });
+      }
+      setItems((prev) =>
+        prev.map((item) =>
+          item.product.id === productId ? { ...item, quantity } : item
+        )
+      );
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const clearCart = () => {
-    setItems([]);
+  const clearCart = async () => {
+    try {
+      setIsLoading(true);
+      // Delete all items
+      await Promise.all(
+        items.map((item) => item.id ? cartAPI.deleteItem(item.id) : Promise.resolve())
+      );
+      setItems([]);
+    } catch (error) {
+      console.error('Failed to clear cart:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -78,7 +187,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateQuantity,
         clearCart,
         totalItems,
-        totalPrice
+        totalPrice,
+        isLoading
       }}
     >
       {children}

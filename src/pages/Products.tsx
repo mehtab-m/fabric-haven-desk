@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, Filter, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductCard from '@/components/ProductCard';
-import { products, categories, subcategories } from '@/services/mockData';
+import { Product, categories, subcategories } from '@/services/mockData';
+import { productAPI, categoryAPI, subcategoryAPI } from '@/services/api';
 
 const Products: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -14,16 +15,117 @@ const Products: React.FC = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState(searchParams.get('subcategory') || 'all');
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [backendCategories, setBackendCategories] = useState<any[]>(categories);
+  const [backendSubcategories, setBackendSubcategories] = useState<any[]>(subcategories);
+
+  // Load categories and products from backend
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Load categories
+        const categoriesData = await categoryAPI.getAll();
+        if (Array.isArray(categoriesData)) {
+          setBackendCategories(categoriesData);
+        } else if (categoriesData.items) {
+          setBackendCategories(categoriesData.items);
+        }
+
+        // Load subcategories
+        const subcategoriesData = await subcategoryAPI.getAll();
+        if (Array.isArray(subcategoriesData)) {
+          setBackendSubcategories(subcategoriesData);
+        } else if (subcategoriesData.items) {
+          setBackendSubcategories(subcategoriesData.items);
+        }
+
+        // Load products
+        const productsData = await productAPI.getAll({
+          category: selectedCategory !== 'all' ? selectedCategory : undefined,
+          subcategory: selectedSubcategory !== 'all' ? selectedSubcategory : undefined,
+          q: search || undefined,
+        });
+
+        // Map backend product format to frontend format
+        if (Array.isArray(productsData)) {
+          setProducts(
+            productsData.map((p: any) => ({
+              id: p.id || p._id,
+              name: p.title || p.name,
+              categoryId: p.categoryId,
+              subcategoryId: p.subcategoryId,
+              originalPrice: p.price || p.originalPrice,
+              discountedPrice: p.price || p.discountedPrice,
+              showOnHomePage: p.showOnHomePage || false,
+              images: p.images || ['https://via.placeholder.com/300'],
+              description: p.description,
+              inStock: (p.stock || 0) > 0,
+              rating: p.rating || 0,
+              reviews: p.reviews || 0,
+            }))
+          );
+        } else if (productsData.items) {
+          setProducts(
+            productsData.items.map((p: any) => ({
+              id: p.id || p._id,
+              name: p.title || p.name,
+              categoryId: p.categoryId,
+              subcategoryId: p.subcategoryId,
+              originalPrice: p.price || p.originalPrice,
+              discountedPrice: p.price || p.discountedPrice,
+              showOnHomePage: p.showOnHomePage || false,
+              images: p.images || ['https://via.placeholder.com/300'],
+              description: p.description,
+              inStock: (p.stock || 0) > 0,
+              rating: p.rating || 0,
+              reviews: p.reviews || 0,
+            }))
+          );
+        }
+      } catch (err) {
+        console.error('Failed to load products:', err);
+        setError('Failed to load products. Using mock data as fallback.');
+        // Fallback to mock data
+        setProducts(
+          categories
+            .filter(c => selectedCategory === 'all' || c.id === selectedCategory)
+            .map(c => ({
+              id: `${c.id}-product`,
+              name: `${c.name} Product`,
+              categoryId: c.id,
+              subcategoryId: 'default',
+              originalPrice: 5000,
+              discountedPrice: 3999,
+              showOnHomePage: false,
+              images: [c.image],
+              description: c.description,
+              inStock: true,
+              rating: 4.5,
+              reviews: 10,
+            }))
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [selectedCategory, selectedSubcategory, search]);
 
   const availableSubcategories = useMemo(() => {
-    if (selectedCategory === 'all') return subcategories;
-    return subcategories.filter((sub) => sub.categoryId === selectedCategory);
-  }, [selectedCategory]);
+    if (selectedCategory === 'all') return backendSubcategories;
+    return backendSubcategories.filter((sub: any) => sub.categoryId === selectedCategory);
+  }, [selectedCategory, backendSubcategories]);
 
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    // Search filter
+    // Search filter (client-side, in case it wasn't filtered by API)
     if (search) {
       filtered = filtered.filter((p) =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -31,12 +133,12 @@ const Products: React.FC = () => {
       );
     }
 
-    // Category filter
+    // Category filter (client-side)
     if (selectedCategory !== 'all') {
       filtered = filtered.filter((p) => p.categoryId === selectedCategory);
     }
 
-    // Subcategory filter
+    // Subcategory filter (client-side)
     if (selectedSubcategory !== 'all') {
       filtered = filtered.filter((p) => p.subcategoryId === selectedSubcategory);
     }
@@ -61,7 +163,7 @@ const Products: React.FC = () => {
     }
 
     return filtered;
-  }, [search, selectedCategory, selectedSubcategory, sortBy]);
+  }, [search, selectedCategory, selectedSubcategory, sortBy, products]);
 
   const clearFilters = () => {
     setSearch('');

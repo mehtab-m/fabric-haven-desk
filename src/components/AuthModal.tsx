@@ -19,12 +19,12 @@ const AuthModal: React.FC = () => {
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
+    try {
       let result;
       if (authModalMode === 'login') {
-        result = login(email, password);
+        result = await login(email, password);
       } else {
-        result = signup(name, email, password);
+        result = await signup(name, email, password);
       }
 
       if (!result.success) {
@@ -34,8 +34,11 @@ const AuthModal: React.FC = () => {
         setPassword('');
         setName('');
       }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const toggleMode = () => {
