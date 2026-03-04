@@ -18,12 +18,14 @@ const ProductDetail: React.FC = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     const loadData = async () => {
       if (!id) return;
       try {
         const backendProduct = await productAPI.getById(id);
+        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         const mappedProduct: Product = {
           id: backendProduct._id || backendProduct.id,
           name: backendProduct.title || backendProduct.name,
@@ -32,13 +34,16 @@ const ProductDetail: React.FC = () => {
           originalPrice: backendProduct.price,
           discountedPrice: backendProduct.price,
           showOnHomePage: backendProduct.showOnHomePage || false,
-          images: backendProduct.images || ['https://via.placeholder.com/300'],
+          images: (backendProduct.images || ['https://via.placeholder.com/300']).map((img: string) =>
+            img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
+          ),
           description: backendProduct.description,
           inStock: (backendProduct.stock || 0) > 0,
           rating: backendProduct.rating || 0,
           reviews: backendProduct.reviews || 0,
         };
         setProduct(mappedProduct);
+        setSelectedImageIndex(0);
 
         if (mappedProduct.categoryId) {
           const categoriesData = await categoryAPI.getAll();
@@ -49,7 +54,7 @@ const ProductDetail: React.FC = () => {
               id: cat._id || cat.id,
               name: cat.name,
               slug: cat.slug,
-              image: cat.image,
+              image: cat.image && cat.image.startsWith('/uploads') ? `${apiOrigin}${cat.image}` : cat.image,
               description: (cat as any).description || '',
             });
           }
@@ -84,7 +89,9 @@ const ProductDetail: React.FC = () => {
               originalPrice: p.price,
               discountedPrice: p.price,
               showOnHomePage: p.showOnHomePage || false,
-              images: p.images || ['https://via.placeholder.com/300'],
+              images: (p.images || ['https://via.placeholder.com/300']).map((img: string) =>
+                img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
+              ),
               description: p.description,
               inStock: (p.stock || 0) > 0,
               rating: p.rating || 0,
@@ -154,12 +161,37 @@ const ProductDetail: React.FC = () => {
         {/* Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image */}
-          <div className="aspect-square rounded-xl overflow-hidden bg-muted">
-            <img
-              src={product.images[0]}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
+          <div className="space-y-4">
+            <div className="aspect-square rounded-xl overflow-hidden bg-muted">
+              <img
+                src={product.images[Math.min(selectedImageIndex, Math.max(0, product.images.length - 1))]}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {product.images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {product.images.map((img, idx) => (
+                  <button
+                    key={`${img}-${idx}`}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={cn(
+                      "shrink-0 w-16 h-16 rounded-lg overflow-hidden border bg-muted focus:outline-none focus:ring-2 focus:ring-ring",
+                      idx === selectedImageIndex ? "border-primary" : "border-border"
+                    )}
+                    aria-label={`View image ${idx + 1}`}
+                  >
+                    <img
+                      src={img}
+                      alt={`${product.name} ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Details */}

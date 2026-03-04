@@ -20,11 +20,12 @@ const AdminCategories: React.FC = () => {
     const fetchCategories = async () => {
       try {
         const data = await categoryAPI.getAll();
+        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         const mapped = (data as any[]).map((c) => ({
           id: c._id || c.id,
           name: c.name,
           slug: c.slug,
-          image: c.image,
+          image: c.image && c.image.startsWith('/uploads') ? `${apiOrigin}${c.image}` : c.image,
           description: (c as any).description || '',
         })) as Category[];
         setCategories(mapped);

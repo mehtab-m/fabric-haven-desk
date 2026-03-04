@@ -142,13 +142,7 @@ const AuthModal: React.FC = () => {
             )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center">
-              Demo Credentials:<br />
-              Admin: zmhomefabrics@gmail.com / zmhomefabrics@123<br />
-              User: mehtayaseen@gmail.com / mehtayaseen@123
-            </p>
-          </div>
+         
         </form>
       </DialogContent>
     </Dialog>

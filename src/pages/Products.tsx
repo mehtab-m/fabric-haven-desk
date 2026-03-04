@@ -31,12 +31,13 @@ const Products: React.FC = () => {
         // Load categories
         const categoriesData = await categoryAPI.getAll();
         const catItems = Array.isArray(categoriesData) ? categoriesData : categoriesData.items || [];
+        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         setBackendCategories(
           catItems.map((c: any) => ({
             id: c._id || c.id,
             name: c.name,
             slug: c.slug,
-            image: c.image,
+            image: c.image && c.image.startsWith('/uploads') ? `${apiOrigin}${c.image}` : c.image,
             description: (c as any).description || '',
           }))
         );
@@ -71,7 +72,9 @@ const Products: React.FC = () => {
             originalPrice: p.price || p.originalPrice,
             discountedPrice: p.price || p.discountedPrice || p.price,
             showOnHomePage: p.showOnHomePage || false,
-            images: p.images || ['https://via.placeholder.com/300'],
+            images: (p.images || ['https://via.placeholder.com/300']).map((img: string) =>
+              img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
+            ),
             description: p.description,
             inStock: (p.stock || 0) > 0,
             rating: p.rating || 0,
@@ -194,7 +197,7 @@ const Products: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((cat) => (
+              {backendCategories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
               ))}
             </SelectContent>

@@ -16,7 +16,16 @@ const AdminProducts: React.FC = () => {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    categoryId: string;
+    subcategoryId: string;
+    originalPrice: string;
+    discountedPrice: string;
+    description: string;
+    showOnHomePage: boolean;
+    images: string[];
+  }>({
     name: '',
     categoryId: '',
     subcategoryId: '',
@@ -24,7 +33,7 @@ const AdminProducts: React.FC = () => {
     discountedPrice: '',
     description: '',
     showOnHomePage: false,
-    image: ''
+    images: [],
   });
   const [uploading, setUploading] = useState(false);
 
@@ -41,13 +50,14 @@ const AdminProducts: React.FC = () => {
           productAPI.getAll(),
         ]);
 
+        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         const mappedCategories = (Array.isArray(categoriesData) ? categoriesData : categoriesData.items || []).map(
           (c: any) =>
             ({
               id: c._id || c.id,
               name: c.name,
               slug: c.slug,
-              image: c.image,
+              image: c.image && c.image.startsWith('/uploads') ? `${apiOrigin}${c.image}` : c.image,
               description: (c as any).description || '',
             } as Category)
         );
@@ -71,7 +81,9 @@ const AdminProducts: React.FC = () => {
           originalPrice: p.price || p.originalPrice,
           discountedPrice: p.price || p.discountedPrice || p.price,
           showOnHomePage: p.showOnHomePage || false,
-          images: p.images || ['https://via.placeholder.com/300'],
+          images: (p.images || ['https://via.placeholder.com/300']).map((img: string) =>
+            img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
+          ),
           description: p.description,
           inStock: (p.stock || 0) > 0,
           rating: p.rating || 0,
@@ -101,8 +113,14 @@ const AdminProducts: React.FC = () => {
   const openAddModal = () => {
     setEditingProduct(null);
     setFormData({
-      name: '', categoryId: '', subcategoryId: '', originalPrice: '',
-      discountedPrice: '', description: '', showOnHomePage: false, image: ''
+      name: '',
+      categoryId: '',
+      subcategoryId: '',
+      originalPrice: '',
+      discountedPrice: '',
+      description: '',
+      showOnHomePage: false,
+      images: [],
     });
     setIsModalOpen(true);
   };
@@ -117,7 +135,7 @@ const AdminProducts: React.FC = () => {
       discountedPrice: product.discountedPrice.toString(),
       description: product.description,
       showOnHomePage: product.showOnHomePage,
-      image: product.images[0]
+      images: product.images || [],
     });
     setIsModalOpen(true);
   };
@@ -129,7 +147,9 @@ const AdminProducts: React.FC = () => {
       price: parseFloat(formData.discountedPrice || formData.originalPrice),
       categoryId: formData.categoryId,
       subcategoryId: formData.subcategoryId,
-      images: [formData.image || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80'],
+      images: formData.images.length
+        ? formData.images
+        : ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80'],
       description: formData.description,
       stock: 100,
     };
@@ -145,7 +165,7 @@ const AdminProducts: React.FC = () => {
           originalPrice: updated.price,
           discountedPrice: updated.price,
           showOnHomePage: editingProduct.showOnHomePage,
-          images: updated.images || [formData.image],
+          images: updated.images || formData.images,
           description: updated.description,
           inStock: (updated.stock || 0) > 0,
           rating: editingProduct.rating,
@@ -163,7 +183,7 @@ const AdminProducts: React.FC = () => {
           originalPrice: created.price,
           discountedPrice: created.price,
           showOnHomePage: formData.showOnHomePage,
-          images: created.images || [formData.image],
+          images: created.images || formData.images,
           description: created.description,
           inStock: (created.stock || 0) > 0,
           rating: 0,
@@ -183,15 +203,24 @@ const AdminProducts: React.FC = () => {
     }
   };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (!files.length) return;
 
     try {
       setUploading(true);
-      const result = await uploadAPI.image(file);
-      setFormData((prev) => ({ ...prev, image: result.url }));
-      toast({ title: 'Image uploaded successfully' });
+      const uploadPromises = files.map((file) => uploadAPI.image(file));
+      const results = await Promise.all(uploadPromises);
+      const urls = results.map((r) => r.url);
+
+      setFormData((prev) => {
+        const combined = [...prev.images, ...urls];
+        // Limit to max 5 images
+        const limited = combined.slice(0, 5);
+        return { ...prev, images: limited };
+      });
+
+      toast({ title: 'Images uploaded successfully' });
     } catch (error: any) {
       console.error('Image upload failed', error);
       toast({
@@ -348,19 +377,21 @@ const AdminProducts: React.FC = () => {
               <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>Product Image</Label>
-              <Input type="file" accept="image/*" onChange={handleImageChange} />
+              <Label>Product Images (up to 5)</Label>
+              <Input type="file" accept="image/*" multiple onChange={handleImagesChange} />
               {uploading && (
-                <p className="text-xs text-muted-foreground">Uploading image...</p>
+                <p className="text-xs text-muted-foreground">Uploading images...</p>
               )}
-              {formData.image && !uploading && (
-                <div className="mt-2">
-                  <p className="text-xs text-muted-foreground mb-1">Preview:</p>
-                  <img
-                    src={formData.image}
-                    alt="Preview"
-                    className="w-24 h-16 object-cover rounded-md border"
-                  />
+              {!uploading && formData.images.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {formData.images.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt={`Preview ${idx + 1}`}
+                      className="w-16 h-16 object-cover rounded-md border"
+                    />
+                  ))}
                 </div>
               )}
             </div>
