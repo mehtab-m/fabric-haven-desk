@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { Product } from '@/services/mockData';
 import { useAuth } from './AuthContext';
 import { cartAPI, productAPI } from '@/services/api';
+import { toast } from '@/hooks/use-toast';
 
 interface CartItem {
   id?: string; // Backend cart item ID
@@ -49,7 +50,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               return {
                 id: item.itemId || item.id || item._id,
                 product: {
-                  id: product.id,
+                  id: product._id || product.id,
                   name: product.title || product.name,
                   categoryId: product.categoryId,
                   subcategoryId: product.subcategoryId,
@@ -96,6 +97,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       await loadCart();
+      toast({
+        title: 'Added to cart',
+        description: `${product.name} has been added to your cart.`,
+      });
     } catch (error) {
       console.error('Failed to add to cart:', error);
       throw error;

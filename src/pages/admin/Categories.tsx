@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Category } from '@/services/mockData';
-import { categoryAPI } from '@/services/api';
+import { categoryAPI, uploadAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const AdminCategories: React.FC = () => {
@@ -13,6 +13,7 @@ const AdminCategories: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', image: '' });
+  const [uploading, setUploading] = useState(false);
 
   // Load categories from backend
   useEffect(() => {
@@ -104,6 +105,27 @@ const AdminCategories: React.FC = () => {
     }
   };
 
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const result = await uploadAPI.image(file);
+      setFormData((prev) => ({ ...prev, image: result.url }));
+      toast({ title: 'Image uploaded successfully' });
+    } catch (error: any) {
+      console.error('Image upload failed', error);
+      toast({
+        title: 'Image upload failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -174,14 +196,27 @@ const AdminCategories: React.FC = () => {
                 required
               />
             </div>
-            <div>
-              <Label htmlFor="image">Image URL</Label>
+            <div className="space-y-2">
+              <Label htmlFor="image">Category Image</Label>
               <Input
                 id="image"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="https://..."
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
               />
+              {uploading && (
+                <p className="text-xs text-muted-foreground">Uploading image...</p>
+              )}
+              {formData.image && !uploading && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Preview:</p>
+                  <img
+                    src={formData.image}
+                    alt="Preview"
+                    className="w-24 h-16 object-cover rounded-md border"
+                  />
+                </div>
+              )}
             </div>
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>

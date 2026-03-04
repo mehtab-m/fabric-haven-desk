@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Product, Category, Subcategory } from '@/services/mockData';
-import { categoryAPI, productAPI, subcategoryAPI } from '@/services/api';
+import { categoryAPI, productAPI, subcategoryAPI, uploadAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const AdminProducts: React.FC = () => {
@@ -26,6 +26,7 @@ const AdminProducts: React.FC = () => {
     showOnHomePage: false,
     image: ''
   });
+  const [uploading, setUploading] = useState(false);
 
   const getCategoryName = (categoryId: string) => categories.find(c => c.id === categoryId)?.name || 'Unknown';
   const getSubcategoryName = (subcategoryId: string) => subcategories.find(s => s.id === subcategoryId)?.name || 'Unknown';
@@ -182,6 +183,27 @@ const AdminProducts: React.FC = () => {
     }
   };
 
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const result = await uploadAPI.image(file);
+      setFormData((prev) => ({ ...prev, image: result.url }));
+      toast({ title: 'Image uploaded successfully' });
+    } catch (error: any) {
+      console.error('Image upload failed', error);
+      toast({
+        title: 'Image upload failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     try {
       await productAPI.delete(id);
@@ -325,9 +347,22 @@ const AdminProducts: React.FC = () => {
               <Label>Description</Label>
               <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required />
             </div>
-            <div>
-              <Label>Image URL</Label>
-              <Input value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} placeholder="https://..." />
+            <div className="space-y-2">
+              <Label>Product Image</Label>
+              <Input type="file" accept="image/*" onChange={handleImageChange} />
+              {uploading && (
+                <p className="text-xs text-muted-foreground">Uploading image...</p>
+              )}
+              {formData.image && !uploading && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Preview:</p>
+                  <img
+                    src={formData.image}
+                    alt="Preview"
+                    className="w-24 h-16 object-cover rounded-md border"
+                  />
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={formData.showOnHomePage} onCheckedChange={(c) => setFormData({ ...formData, showOnHomePage: c })} />

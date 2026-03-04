@@ -36,6 +36,33 @@ const apiRequest = async <T = any>(
   return response.json();
 };
 
+// Raw upload helper (multipart/form-data, no JSON headers)
+const uploadRequest = async <T = any>(
+  endpoint: string,
+  formData: FormData
+): Promise<T> => {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  const headers: HeadersInit = {};
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `API Error: ${response.status}`);
+  }
+
+  return response.json();
+};
+
 // ===== AUTH ENDPOINTS =====
 export const authAPI = {
   register: (data: { name: string; email: string; password: string }) =>
@@ -260,6 +287,15 @@ export const adminAPI = {
     }),
 };
 
+// ===== UPLOAD ENDPOINTS =====
+export const uploadAPI = {
+  image: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return uploadRequest<{ url: string }>('/uploads', formData);
+  },
+};
+
 export default {
   authAPI,
   productAPI,
@@ -269,4 +305,5 @@ export default {
   orderAPI,
   wishlistAPI,
   adminAPI,
+  uploadAPI,
 };
