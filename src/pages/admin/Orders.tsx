@@ -21,7 +21,8 @@ const AdminOrders: React.FC = () => {
 
         const items = Array.isArray(ordersData) ? ordersData : ordersData.items || [];
         const mappedOrders: Order[] = items.map((o: any) => ({
-          id: o._id || o.id,
+          id: o._id || o.id, // backend ID for API operations
+          orderNumber: o.orderNumber,
           customerId: o.userId?._id || o.userId || '',
           customerName: o.userId?.name || 'Customer',
           products: (o.items || []).map((i: any) => ({
@@ -134,7 +135,9 @@ const AdminOrders: React.FC = () => {
             <tbody>
               {filteredOrders.map((order) => (
                 <tr key={order.id} className="border-t border-border">
-                  <td className="py-4 px-4 font-medium">{order.id}</td>
+                  <td className="py-4 px-4 font-medium">
+                    {order.orderNumber ?? order.id}
+                  </td>
                   <td className="py-4 px-4">{order.customerName}</td>
                   <td className="py-4 px-4 text-muted-foreground hidden md:table-cell">{order.orderDate}</td>
                   <td className="py-4 px-4">
@@ -174,7 +177,9 @@ const AdminOrders: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Order ID</p>
-                  <p className="font-medium">{viewingOrder.id}</p>
+                  <p className="font-medium">
+                    {viewingOrder.orderNumber ?? viewingOrder.id}
+                  </p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(viewingOrder.status)}`}>
                   {viewingOrder.status.charAt(0).toUpperCase() + viewingOrder.status.slice(1)}

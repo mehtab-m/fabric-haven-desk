@@ -21,6 +21,7 @@ const AuthModal: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
@@ -70,7 +71,7 @@ const AuthModal: React.FC = () => {
         if (authModalMode === 'login') {
           result = await login(email, password);
         } else {
-          result = await signup(name, email, password);
+          result = await signup(name, email, password, phone);
         }
 
         if (!result.success) {
@@ -79,6 +80,7 @@ const AuthModal: React.FC = () => {
           setEmail('');
           setPassword('');
           setName('');
+          setPhone('');
         }
       }
     } catch (err: any) {
@@ -125,6 +127,21 @@ const AuthModal: React.FC = () => {
                   required
                 />
               </div>
+            </div>
+          )}
+
+          {/* Contact / Phone (signup only) */}
+          {!isResetMode && authModalMode === 'signup' && (
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium">Contact</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="03xx-xxxxxxx"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
             </div>
           )}
 

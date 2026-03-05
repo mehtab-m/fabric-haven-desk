@@ -57,7 +57,8 @@ const AdminDashboard: React.FC = () => {
         const [ordersData, productsData] = await Promise.all([orderAPI.getAll(), productAPI.getAll()]);
         const orderItems = Array.isArray(ordersData) ? ordersData : ordersData.items || [];
         const mappedOrders: Order[] = orderItems.map((o: any) => ({
-          id: o._id || o.id,
+          id: o._id || o.id, // backend ID
+          orderNumber: o.orderNumber,
           customerId: o.userId?._id || o.userId,
           customerName: o.userId?.name || 'Customer',
           products: (o.items || []).map((i: any) => ({
@@ -221,7 +222,9 @@ const AdminDashboard: React.FC = () => {
             <tbody>
               {recentOrders.map((order) => (
                 <tr key={order.id} className="border-b border-border last:border-0">
-                  <td className="py-3 px-4 font-medium">{order.id}</td>
+                  <td className="py-3 px-4 font-medium">
+                    {order.orderNumber ?? order.id}
+                  </td>
                   <td className="py-3 px-4">{order.customerName}</td>
                   <td className="py-3 px-4 text-muted-foreground">{order.orderDate}</td>
                   <td className="py-3 px-4">

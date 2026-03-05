@@ -65,7 +65,7 @@ const uploadRequest = async <T = any>(
 
 // ===== AUTH ENDPOINTS =====
 export const authAPI = {
-  register: (data: { name: string; email: string; password: string }) =>
+  register: (data: { name: string; email: string; password: string; phone: string }) =>
     apiRequest('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),

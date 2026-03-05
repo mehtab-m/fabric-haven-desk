@@ -41,6 +41,7 @@ export interface Customer {
 
 export interface Order {
   id: string;
+  orderNumber?: number;
   customerId: string;
   customerName: string;
   products: { productId: string; quantity: number; price: number }[];

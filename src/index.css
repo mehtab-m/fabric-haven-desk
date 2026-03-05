@@ -1,18 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-  /* Light theme: make white dominant (~90%), black used for text (~9%), lime (~1%) */
-  --white: 0 0% 100%;
-  --black: 0 0% 0%;
-  --black-9: 0 0% 0% / 0.09; /* helper for subtle shadows/borders */
+    /* Light theme: make white dominant (~90%), black used for text (~9%), lime (~1%) */
+    --white: 0 0% 100%;
+    --black: 0 0% 0%;
+    --black-9: 0 0% 0% / 0.09;
+    /* helper for subtle shadows/borders */
 
-  --background: var(--white);
-  --foreground: var(--black);
+    --background: var(--white);
+    --foreground: var(--black);
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
@@ -50,26 +51,26 @@
     --gold: 50 80% 50%;
     --soft-white: 0 0% 100%;
 
-  /* Gradient tokens removed — use solid colors only */
-  --gradient-hero: none;
-  --gradient-card: none;
-  --gradient-accent: none;
+    /* Gradient tokens removed — use solid colors only */
+    --gradient-hero: none;
+    --gradient-card: none;
+    --gradient-accent: none;
 
-  /* Shadows use subtle black at ~9% opacity to meet "black 9%" usage */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.09);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
-  --shadow-xl: 0 16px 48px rgba(0,0,0,0.16);
+    /* Shadows use subtle black at ~9% opacity to meet "black 9%" usage */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.09);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
 
-  /* Sidebar aligned to white */
-  --sidebar-background: var(--white);
-  --sidebar-foreground: var(--black);
-  --sidebar-primary: 83 78% 56%;
-  --sidebar-primary-foreground: var(--black);
-  --sidebar-accent: 83 78% 56%;
-  --sidebar-accent-foreground: var(--black);
-  --sidebar-border: 0 0% 94%;
-  --sidebar-ring: 83 78% 56%;
+    /* Sidebar aligned to white */
+    --sidebar-background: var(--white);
+    --sidebar-foreground: var(--black);
+    --sidebar-primary: 83 78% 56%;
+    --sidebar-primary-foreground: var(--black);
+    --sidebar-accent: 83 78% 56%;
+    --sidebar-accent-foreground: var(--black);
+    --sidebar-border: 0 0% 94%;
+    --sidebar-ring: 83 78% 56%;
   }
 
   .dark {
@@ -118,7 +119,12 @@
     font-family: 'Inter', sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Playfair Display', serif;
   }
 }
@@ -168,29 +174,36 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes slideUp {
-    from { 
-      opacity: 0; 
-      transform: translateY(20px); 
+    from {
+      opacity: 0;
+      transform: translateY(20px);
     }
-    to { 
-      opacity: 1; 
-      transform: translateY(0); 
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
   @keyframes scaleIn {
-    from { 
-      opacity: 0; 
-      transform: scale(0.95); 
+    from {
+      opacity: 0;
+      transform: scale(0.95);
     }
-    to { 
-      opacity: 1; 
-      transform: scale(1); 
+
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
   }
 }

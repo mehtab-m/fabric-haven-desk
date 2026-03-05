@@ -6,7 +6,8 @@ import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
 import { Product, Category } from '@/services/mockData';
 import { productAPI, categoryAPI } from '@/services/api';
-import heroImage from "../../public/logo/background.jpg"
+
+const heroImage = '/logo/background.jpg';
 const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -79,7 +80,7 @@ const Home: React.FC = () => {
               Elevate Your Home with Premium Fabrics
             </h1>
             <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              Discover our exquisite collection of bedsheets, curtains, quilts, and more. 
+              Discover our exquisite collection of bedsheets, curtains, quilts, and more.
               Crafted for comfort, designed for elegance.
             </p>
             <div className="flex flex-wrap gap-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
@@ -196,7 +197,7 @@ const Home: React.FC = () => {
             Transform Your Living Space
           </h2>
           <p className="text-primary-foreground/80 max-w-2xl mx-auto mb-8">
-            Join thousands of satisfied customers who have elevated their homes with our premium fabrics. 
+            Join thousands of satisfied customers who have elevated their homes with our premium fabrics.
             Quality guaranteed.
           </p>
           <Button asChild variant="secondary" size="xl">

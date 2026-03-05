@@ -20,7 +20,8 @@ const Profile: React.FC = () => {
         const mapped: Order[] = items
           .filter((o: any) => !user || (o.userId?._id || o.userId)?.toString() === user.id)
           .map((o: any) => ({
-            id: o._id || o.id,
+            id: o._id || o.id, // backend ID
+            orderNumber: o.orderNumber,
             customerId: o.userId?._id || o.userId,
             customerName: o.userId?.name || user?.name || 'You',
             products: (o.items || []).map((i: any) => ({
@@ -124,7 +125,9 @@ const Profile: React.FC = () => {
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg gap-4"
                   >
                     <div>
-                      <p className="font-medium">Order #{order.id}</p>
+                      <p className="font-medium">
+                        Order #{order.orderNumber ?? order.id}
+                      </p>
                       <p className="text-sm text-muted-foreground">{order.orderDate}</p>
                     </div>
                     <div className="flex items-center gap-4">
