@@ -20,6 +20,9 @@ interface AuthContextType {
   authModalMode: 'login' | 'signup';
   setAuthModalMode: (mode: 'login' | 'signup') => void;
   isLoading: boolean;
+  forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+  verifyPin: (email: string, pin: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string, newPassword: string, pin: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -105,6 +108,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      await authAPI.forgotPassword({ email });
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to send reset code' };
+    }
+  };
+
+  const verifyPin = async (email: string, pin: string) => {
+    try {
+      await authAPI.verifyPin({ email, pin });
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Invalid or expired code' };
+    }
+  };
+
+  const resetPassword = async (email: string, newPassword: string, pin: string) => {
+    try {
+      await authAPI.resetPassword({ email, newPassword, pin });
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to reset password' };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -118,7 +148,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setShowAuthModal,
         authModalMode,
         setAuthModalMode,
-        isLoading
+        isLoading,
+        forgotPassword,
+        verifyPin,
+        resetPassword,
       }}
     >
       {children}

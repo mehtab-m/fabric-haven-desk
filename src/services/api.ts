@@ -118,9 +118,23 @@ interface ProductsQueryParams {
 
 export const productAPI = {
   getAll: (params?: ProductsQueryParams) => {
-    const queryString = params
-      ? '?' + new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()
-      : '';
+    // Remove undefined/empty params so we don't send "undefined" strings to the backend
+    const cleanedParams = params
+      ? Object.fromEntries(
+          Object.entries(params).filter(
+            ([, v]) => v !== undefined && v !== null && v !== '' && v !== ('undefined' as any)
+          )
+        )
+      : undefined;
+
+    const queryString =
+      cleanedParams && Object.keys(cleanedParams).length > 0
+        ?
+          '?' +
+          new URLSearchParams(
+            Object.entries(cleanedParams).map(([k, v]) => [k, String(v)])
+          ).toString()
+        : '';
     return apiRequest(`/products${queryString}`, {
       method: 'GET',
     });
