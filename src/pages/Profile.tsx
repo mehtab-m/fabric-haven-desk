@@ -107,10 +107,7 @@ const Profile: React.FC = () => {
                 <label className="text-sm text-muted-foreground">Email</label>
                 <p className="font-medium">{user?.email}</p>
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Account Type</label>
-                <p className="font-medium capitalize">{user?.role}</p>
-              </div>
+
             </div>
           </section>
 
@@ -131,12 +128,11 @@ const Profile: React.FC = () => {
                       <p className="text-sm text-muted-foreground">{order.orderDate}</p>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        order.status === 'delivered' ? 'bg-accent/20 text-accent' :
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'delivered' ? 'bg-accent/20 text-accent' :
                         order.status === 'shipped' ? 'bg-blue-100 text-blue-600' :
-                        order.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
-                        'bg-destructive/20 text-destructive'
-                      }`}>
+                          order.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+                            'bg-destructive/20 text-destructive'
+                        }`}>
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </span>
                       <span className="font-bold">₨ {order.total.toLocaleString()}</span>
