@@ -11,7 +11,7 @@ import { productAPI, categoryAPI, subcategoryAPI } from '@/services/api';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { addToCart } = useCart();
+  const { addToCart, isLoading } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
@@ -124,9 +124,13 @@ const ProductDetail: React.FC = () => {
     ((product.originalPrice - product.discountedPrice) / product.originalPrice) * 100
   );
 
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
+  const handleAddToCart = async () => {
+    try {
+      for (let i = 0; i < quantity; i++) {
+        await addToCart(product!);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
     }
   };
 
@@ -275,9 +279,14 @@ const ProductDetail: React.FC = () => {
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button onClick={handleAddToCart} size="xl" className="flex-1">
+              <Button 
+                onClick={handleAddToCart} 
+                size="xl" 
+                className="flex-1"
+                disabled={isLoading}
+              >
                 <ShoppingCart className="h-5 w-5 mr-2" />
-                Add to Cart
+                {isLoading ? 'Adding...' : 'Add to Cart'}
               </Button>
               <Button
                 onClick={handleWishlistClick}

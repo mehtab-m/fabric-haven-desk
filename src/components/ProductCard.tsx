@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const inWishlist = isInWishlist(product.id);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const discount = Math.round(
     ((product.originalPrice - product.discountedPrice) / product.originalPrice) * 100
@@ -30,10 +31,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product);
+    try {
+      setIsAddingToCart(true);
+      await addToCart(product);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   return (
@@ -100,9 +108,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           className="w-full"
           variant="default"
           size="sm"
+          disabled={isAddingToCart}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />
-          Add to Cart
+          {isAddingToCart ? 'Adding...' : 'Add to Cart'}
         </Button>
       </div>
     </div>
