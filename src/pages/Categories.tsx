@@ -15,13 +15,12 @@ const Categories: React.FC = () => {
         setError(null);
         const data = await categoryAPI.getAll();
         const items = Array.isArray(data) ? data : data.items || [];
-        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         setCategories(
           items.map((c: any) => ({
             id: c._id || c.id,
             name: c.name,
             slug: c.slug,
-            image: c.image && c.image.startsWith('/uploads') ? `${apiOrigin}${c.image}` : c.image,
+            image: c.image || '',
             description: (c as any).description || '',
           }))
         );

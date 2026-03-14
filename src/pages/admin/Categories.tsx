@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Category } from '@/services/mockData';
 import { categoryAPI, uploadAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
+import { getCacheBustedImageUrl } from '@/lib/imageUtils';
 
 const AdminCategories: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -20,12 +21,11 @@ const AdminCategories: React.FC = () => {
     const fetchCategories = async () => {
       try {
         const data = await categoryAPI.getAll();
-        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         const mapped = (data as any[]).map((c) => ({
           id: c._id || c.id,
           name: c.name,
           slug: c.slug,
-          image: c.image && c.image.startsWith('/uploads') ? `${apiOrigin}${c.image}` : c.image,
+          image: c.image || '',
           description: (c as any).description || '',
         })) as Category[];
         setCategories(mapped);
@@ -151,7 +151,7 @@ const AdminCategories: React.FC = () => {
             {categories.map((category) => (
               <tr key={category.id} className="border-t border-border">
                 <td className="py-4 px-6">
-                  <img src={category.image} alt={category.name} className="w-16 h-12 object-cover rounded-lg" />
+                  <img src={getCacheBustedImageUrl(category.image)} alt={category.name} className="w-16 h-12 object-cover rounded-lg" />
                 </td>
                 <td className="py-4 px-6 font-medium">{category.name}</td>
                 <td className="py-4 px-6 text-muted-foreground hidden md:table-cell">
@@ -204,7 +204,7 @@ const AdminCategories: React.FC = () => {
                 <div className="mt-2">
                   <p className="text-xs text-muted-foreground mb-1">Preview:</p>
                   <img
-                    src={formData.image}
+                    src={getCacheBustedImageUrl(formData.image)}
                     alt="Preview"
                     className="w-24 h-16 object-cover rounded-md border"
                   />

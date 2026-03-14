@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
   product: Product;
+  subcategoryName?: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, subcategoryName }) => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const inWishlist = isInWishlist(product.id);
@@ -77,29 +78,37 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       {/* Product Info */}
       <div className="p-4">
+        {/* Subcategory Badge - MAIN */}
+        {subcategoryName && (
+          <div className="mb-2">
+            <span className="inline-block px-2 py-1 bg-muted text-muted-foreground text-xs font-semibold rounded">
+              {subcategoryName}
+            </span>
+          </div>
+        )}
+
+        {/* Product Name - SECONDARY */}
         <Link to={`/product/${product.id}`}>
-          <h3 className="font-display text-lg font-semibold text-foreground mb-1 line-clamp-2 hover:text-primary transition-colors">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-2 line-clamp-2 hover:text-primary transition-colors">
             {product.name}
           </h3>
         </Link>
 
-        {/* Rating */}
-        <div className="flex items-center gap-1 mb-2">
+        {/* Rating - COMMENTED OUT */}
+        {/* <div className="flex items-center gap-1 mb-2">
           <Star className="h-4 w-4 fill-gold text-gold" />
           <span className="text-sm font-medium">{product.rating}</span>
           <span className="text-sm text-muted-foreground">({product.reviews})</span>
-        </div>
+        </div> */}
 
         {/* Price */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-xl font-bold text-primary">
+          <span className="text-sm text-muted-foreground line-through">
+            ₨ {product.originalPrice.toLocaleString()}
+          </span>
+          <span className="text-lg font-bold text-primary">
             ₨ {product.discountedPrice.toLocaleString()}
           </span>
-          {discount > 0 && (
-            <span className="text-sm text-muted-foreground line-through">
-              ₨ {product.originalPrice.toLocaleString()}
-            </span>
-          )}
         </div>
 
         {/* Add to Cart Button */}

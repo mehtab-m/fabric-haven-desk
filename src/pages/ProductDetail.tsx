@@ -25,7 +25,6 @@ const ProductDetail: React.FC = () => {
       if (!id) return;
       try {
         const backendProduct = await productAPI.getById(id);
-        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         const mappedProduct: Product = {
           id: backendProduct._id || backendProduct.id,
           name: backendProduct.title || backendProduct.name,
@@ -34,9 +33,7 @@ const ProductDetail: React.FC = () => {
           originalPrice: backendProduct.price,
           discountedPrice: backendProduct.price,
           showOnHomePage: backendProduct.showOnHomePage || false,
-          images: (backendProduct.images || ['https://via.placeholder.com/300']).map((img: string) =>
-            img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
-          ),
+          images: backendProduct.images && backendProduct.images.length > 0 ? backendProduct.images : ['https://via.placeholder.com/300'],
           description: backendProduct.description,
           inStock: (backendProduct.stock || 0) > 0,
           rating: backendProduct.rating || 0,
@@ -54,7 +51,7 @@ const ProductDetail: React.FC = () => {
               id: cat._id || cat.id,
               name: cat.name,
               slug: cat.slug,
-              image: cat.image && cat.image.startsWith('/uploads') ? `${apiOrigin}${cat.image}` : cat.image,
+              image: cat.image || '',
               description: (cat as any).description || '',
             });
           }
@@ -89,9 +86,7 @@ const ProductDetail: React.FC = () => {
               originalPrice: p.price,
               discountedPrice: p.price,
               showOnHomePage: p.showOnHomePage || false,
-              images: (p.images || ['https://via.placeholder.com/300']).map((img: string) =>
-                img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
-              ),
+              images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
               description: p.description,
               inStock: (p.stock || 0) > 0,
               rating: p.rating || 0,

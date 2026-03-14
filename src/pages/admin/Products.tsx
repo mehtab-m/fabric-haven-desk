@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Product, Category, Subcategory } from '@/services/mockData';
 import { categoryAPI, productAPI, subcategoryAPI, uploadAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
+import { getCacheBustedImageUrl } from '@/lib/imageUtils';
 
 const AdminProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -50,14 +51,13 @@ const AdminProducts: React.FC = () => {
           productAPI.getAll(),
         ]);
 
-        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         const mappedCategories = (Array.isArray(categoriesData) ? categoriesData : categoriesData.items || []).map(
           (c: any) =>
             ({
               id: c._id || c.id,
               name: c.name,
               slug: c.slug,
-              image: c.image && c.image.startsWith('/uploads') ? `${apiOrigin}${c.image}` : c.image,
+              image: c.image || '',
               description: (c as any).description || '',
             } as Category)
         );
@@ -81,9 +81,7 @@ const AdminProducts: React.FC = () => {
           originalPrice: p.price || p.originalPrice,
           discountedPrice: p.price || p.discountedPrice || p.price,
           showOnHomePage: p.showOnHomePage || false,
-          images: (p.images || ['https://via.placeholder.com/300']).map((img: string) =>
-            img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
-          ),
+          images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
           description: p.description,
           inStock: (p.stock || 0) > 0,
           rating: p.rating || 0,
@@ -293,7 +291,7 @@ const AdminProducts: React.FC = () => {
               {products.map((product) => (
                 <tr key={product.id} className="border-t border-border">
                   <td className="py-3 px-4">
-                    <img src={product.images[0]} alt={product.name} className="w-14 h-14 object-cover rounded-lg" />
+                    <img src={getCacheBustedImageUrl(product.images[0])} alt={product.name} className="w-14 h-14 object-cover rounded-lg" />
                   </td>
                   <td className="py-3 px-4">
                     <p className="font-medium line-clamp-1">{product.name}</p>
@@ -387,7 +385,7 @@ const AdminProducts: React.FC = () => {
                   {formData.images.map((img, idx) => (
                     <img
                       key={idx}
-                      src={img}
+                      src={getCacheBustedImageUrl(img)}
                       alt={`Preview ${idx + 1}`}
                       className="w-16 h-16 object-cover rounded-md border"
                     />

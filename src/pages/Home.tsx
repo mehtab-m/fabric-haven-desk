@@ -4,13 +4,14 @@ import { ArrowRight, Truck, Shield, HeadphonesIcon, RefreshCw } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
-import { Product, Category } from '@/services/mockData';
-import { productAPI, categoryAPI } from '@/services/api';
+import { Product, Category, Subcategory } from '@/services/mockData';
+import { productAPI, categoryAPI, subcategoryAPI } from '@/services/api';
 
 const heroImage = '/logo/background.jpg';
 const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -31,13 +32,23 @@ const Home: React.FC = () => {
             originalPrice: p.price || p.originalPrice,
             discountedPrice: p.price || p.discountedPrice || p.price,
             showOnHomePage: p.showOnHomePage || false,
-            images: (p.images || ['https://via.placeholder.com/300']).map((img: string) =>
-              img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
-            ),
+            images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
             description: p.description,
             inStock: (p.stock || 0) > 0,
             rating: p.rating || 0,
             reviews: p.reviews || 0,
+          }))
+        );
+
+        // Load subcategories
+        const subcategoriesData = await subcategoryAPI.getAll();
+        const subItems = Array.isArray(subcategoriesData) ? subcategoriesData : subcategoriesData.items || [];
+        setSubcategories(
+          subItems.map((s: any) => ({
+            id: s._id || s.id,
+            categoryId: s.categoryId,
+            name: s.name,
+            slug: s.slug,
           }))
         );
 
@@ -49,7 +60,7 @@ const Home: React.FC = () => {
             id: c._id || c.id,
             name: c.name,
             slug: c.slug,
-            image: c.image && c.image.startsWith('/uploads') ? `${apiOrigin}${c.image}` : c.image,
+            image: c.image || '',
             description: (c as any).description || '',
           }))
         );
@@ -183,9 +194,16 @@ const Home: React.FC = () => {
             </Button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {featuredProducts.map((product) => {
+              const subcategory = subcategories.find((s) => s.id === product.subcategoryId);
+              return (
+                <ProductCard 
+                  key={product.id} 
+                  product={product}
+                  subcategoryName={subcategory?.name}
+                />
+              );
+            })}
           </div>
         </div>
       </section>

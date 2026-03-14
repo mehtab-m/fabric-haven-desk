@@ -17,7 +17,6 @@ const CategoryPage: React.FC = () => {
       try {
         const categoriesData = await categoryAPI.getAll();
         const items = Array.isArray(categoriesData) ? categoriesData : categoriesData.items || [];
-        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         const catRaw = items.find((c: any) => c.slug === slug);
         if (!catRaw) return;
 
@@ -25,7 +24,7 @@ const CategoryPage: React.FC = () => {
           id: catRaw._id || catRaw.id,
           name: catRaw.name,
           slug: catRaw.slug,
-          image: catRaw.image && catRaw.image.startsWith('/uploads') ? `${apiOrigin}${catRaw.image}` : catRaw.image,
+          image: catRaw.image || '',
           description: (catRaw as any).description || '',
         };
         setCategory(mappedCategory);
@@ -62,9 +61,7 @@ const CategoryPage: React.FC = () => {
                 originalPrice: p.price,
                 discountedPrice: p.price,
                 showOnHomePage: p.showOnHomePage || false,
-                images: (p.images || ['https://via.placeholder.com/300']).map((img: string) =>
-                  img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
-                ),
+                images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
                 description: p.description,
                 inStock: (p.stock || 0) > 0,
                 rating: p.rating || 0,

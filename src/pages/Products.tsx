@@ -31,13 +31,12 @@ const Products: React.FC = () => {
         // Load categories
         const categoriesData = await categoryAPI.getAll();
         const catItems = Array.isArray(categoriesData) ? categoriesData : categoriesData.items || [];
-        const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
         setBackendCategories(
           catItems.map((c: any) => ({
             id: c._id || c.id,
             name: c.name,
             slug: c.slug,
-            image: c.image && c.image.startsWith('/uploads') ? `${apiOrigin}${c.image}` : c.image,
+            image: c.image || '',
             description: (c as any).description || '',
           }))
         );
@@ -72,9 +71,7 @@ const Products: React.FC = () => {
             originalPrice: p.price || p.originalPrice,
             discountedPrice: p.price || p.discountedPrice || p.price,
             showOnHomePage: p.showOnHomePage || false,
-            images: (p.images || ['https://via.placeholder.com/300']).map((img: string) =>
-              img.startsWith('/uploads') ? `${apiOrigin}${img}` : img
-            ),
+            images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
             description: p.description,
             inStock: (p.stock || 0) > 0,
             rating: p.rating || 0,
@@ -240,9 +237,16 @@ const Products: React.FC = () => {
       {/* Products Grid */}
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {filteredProducts.map((product) => {
+            const subcategory = backendSubcategories.find((s) => s.id === product.subcategoryId);
+            return (
+              <ProductCard 
+                key={product.id} 
+                product={product}
+                subcategoryName={subcategory?.name}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-16">
