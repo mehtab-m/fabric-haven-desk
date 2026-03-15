@@ -64,7 +64,7 @@ const AdminCategories: React.FC = () => {
           id: (updated as any)._id || (updated as any).id,
           name: updated.name,
           slug: updated.slug,
-          image: updated.image,
+          image: formData.image || updated.image,
           description: (updated as any).description || '',
         };
 
@@ -82,7 +82,7 @@ const AdminCategories: React.FC = () => {
           name: created.name,
           slug: created.slug,
           description: formData.description,
-          image: created.image,
+          image: formData.image,
         };
 
         setCategories([...categories, newCategory]);
