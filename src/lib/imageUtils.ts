@@ -23,19 +23,24 @@ export const normalizeImageUrl = (url: string | undefined | null, bustCache = fa
     return 'https://via.placeholder.com/300';
   }
 
+  const trimmedUrl = url.trim();
   let finalUrl = '';
 
-  // If it's already a full URL (http/https), use it
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    finalUrl = url;
+  // Handle Cloudinary absolute URLs like https://res.cloudinary.com/duhizkiae/image/upload/v.../
+  if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+    finalUrl = trimmedUrl;
   }
-  // If it's a local upload path, prepend API origin
-  else if (url.startsWith('/uploads')) {
-    finalUrl = `${API_ORIGIN}${url}`;
+  // Handle protocol-relative URLs like //res.cloudinary.com/... if they ever appear.
+  else if (trimmedUrl.startsWith('//')) {
+    finalUrl = `https:${trimmedUrl}`;
   }
-  // Default use as-is
+  // Handle backend local uploads served from /uploads.
+  else if (trimmedUrl.startsWith('/uploads')) {
+    finalUrl = `${API_ORIGIN}${trimmedUrl}`;
+  }
+  // Default: use raw value as fallback.
   else {
-    finalUrl = url;
+    finalUrl = trimmedUrl;
   }
 
   // Add cache busting parameter if requested
