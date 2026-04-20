@@ -7,10 +7,16 @@
 const API_ORIGIN = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
 
 /**
+ * API_ORIGIN is used to turn backend-relative local upload paths like /uploads/xxx into full URLs.
+ * This is required because local upload paths are served from the backend, while Cloudinary URLs are already absolute.
+ */
+
+/**
  * Normalize image URL to full URL
- * - If URL starts with /uploads, prepend API_ORIGIN
- * - If URL is already a full URL (http/https), use as-is
- * - If URL is Cloudinary URL, use as-is
+ * - Step 1: If URL starts with /uploads, it is a local backend path and must be prefixed with the API origin.
+ * - Step 2: If URL is already a full HTTP/HTTPS URL, leave it unchanged (this covers Cloudinary URLs).
+ * - Step 3: Otherwise, fall back to the raw value.
+ * - Step 4: Optionally add a cache-busting query parameter for freshly uploaded/updated images.
  */
 export const normalizeImageUrl = (url: string | undefined | null, bustCache = false): string => {
   if (!url) {

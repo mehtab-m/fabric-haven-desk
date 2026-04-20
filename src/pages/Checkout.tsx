@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
 import { orderAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
+import { normalizeImageUrl } from '@/lib/imageUtils';
 
 const Checkout: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -191,7 +192,7 @@ const Checkout: React.FC = () => {
               {items.map(({ product, quantity }) => (
                 <div key={product.id} className="flex gap-3">
                   <img
-                    src={product.images[0]}
+                    src={normalizeImageUrl(product.images[0])}
                     alt={product.name}
                     className="w-16 h-16 object-cover rounded-lg"
                   />

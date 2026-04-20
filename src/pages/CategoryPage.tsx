@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { Category, Subcategory, Product } from '@/services/mockData';
 import { categoryAPI, subcategoryAPI, productAPI } from '@/services/api';
+import { normalizeImageUrls, normalizeImageUrl } from '@/lib/imageUtils';
 
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -61,7 +62,7 @@ const CategoryPage: React.FC = () => {
                 originalPrice: p.price,
                 discountedPrice: p.price,
                 showOnHomePage: p.showOnHomePage || false,
-                images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
+                images: p.images && p.images.length > 0 ? normalizeImageUrls(p.images) : ['https://via.placeholder.com/300'],
                 description: p.description,
                 inStock: (p.stock || 0) > 0,
                 rating: p.rating || 0,
@@ -93,7 +94,7 @@ const CategoryPage: React.FC = () => {
       {/* Hero Banner */}
       <div className="relative h-64 md:h-80">
         <img
-          src={category.image}
+          src={normalizeImageUrl(category.image)}
           alt={category.name}
           className="w-full h-full object-cover"
         />

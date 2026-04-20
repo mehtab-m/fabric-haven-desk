@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ProductCard from '@/components/ProductCard';
 import { Product, Category, Subcategory } from '@/services/mockData';
 import { productAPI, categoryAPI, subcategoryAPI } from '@/services/api';
+import { normalizeImageUrls } from '@/lib/imageUtils';
 
 const Products: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -71,7 +72,7 @@ const Products: React.FC = () => {
             originalPrice: p.price || p.originalPrice,
             discountedPrice: p.price || p.discountedPrice || p.price,
             showOnHomePage: p.showOnHomePage || false,
-            images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
+            images: p.images && p.images.length > 0 ? normalizeImageUrls(p.images) : ['https://via.placeholder.com/300'],
             description: p.description,
             inStock: (p.stock || 0) > 0,
             rating: p.rating || 0,

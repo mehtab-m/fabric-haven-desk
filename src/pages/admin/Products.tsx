@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Product, Category, Subcategory } from '@/services/mockData';
 import { categoryAPI, productAPI, subcategoryAPI, uploadAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
-import { getCacheBustedImageUrl } from '@/lib/imageUtils';
+import { getCacheBustedImageUrl, normalizeImageUrls } from '@/lib/imageUtils';
 
 const AdminProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -81,7 +81,8 @@ const AdminProducts: React.FC = () => {
           originalPrice: p.price || p.originalPrice,
           discountedPrice: p.price || p.discountedPrice || p.price,
           showOnHomePage: p.showOnHomePage || false,
-          images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
+          // Step 2: Normalize all product images from backend before using them anywhere in the admin UI.
+          images: p.images && p.images.length > 0 ? normalizeImageUrls(p.images) : ['https://via.placeholder.com/300'],
           description: p.description,
           inStock: (p.stock || 0) > 0,
           rating: p.rating || 0,

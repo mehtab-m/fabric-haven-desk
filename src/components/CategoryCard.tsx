@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Category } from '@/services/mockData';
+import { normalizeImageUrl } from '@/lib/imageUtils';
 
 interface CategoryCardProps {
   category: Category;
@@ -15,7 +16,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
     >
       {/* Background Image */}
       <img
-        src={category.image}
+        src={normalizeImageUrl(category.image)}
         alt={category.name}
         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
       />

@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { cn } from '@/lib/utils';
 import { productAPI, categoryAPI, subcategoryAPI } from '@/services/api';
+import { normalizeImageUrl, normalizeImageUrls } from '@/lib/imageUtils';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +34,8 @@ const ProductDetail: React.FC = () => {
           originalPrice: backendProduct.price,
           discountedPrice: backendProduct.price,
           showOnHomePage: backendProduct.showOnHomePage || false,
-          images: backendProduct.images && backendProduct.images.length > 0 ? backendProduct.images : ['https://via.placeholder.com/300'],
+          // Step 1: Normalize main product images, converting Cloudinary URLs and local /uploads paths into usable src values.
+          images: backendProduct.images && backendProduct.images.length > 0 ? normalizeImageUrls(backendProduct.images) : ['https://via.placeholder.com/300'],
           description: backendProduct.description,
           inStock: (backendProduct.stock || 0) > 0,
           rating: backendProduct.rating || 0,
@@ -86,7 +88,8 @@ const ProductDetail: React.FC = () => {
               originalPrice: p.price,
               discountedPrice: p.price,
               showOnHomePage: p.showOnHomePage || false,
-              images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
+              // Normalize related product images so Cloudinary URLs are displayed rather than missing or broken thumbnails.
+              images: p.images && p.images.length > 0 ? normalizeImageUrls(p.images) : ['https://via.placeholder.com/300'],
               description: p.description,
               inStock: (p.stock || 0) > 0,
               rating: p.rating || 0,
@@ -163,7 +166,7 @@ const ProductDetail: React.FC = () => {
           <div className="space-y-4">
             <div className="aspect-square rounded-xl overflow-hidden bg-muted">
               <img
-                src={product.images[Math.min(selectedImageIndex, Math.max(0, product.images.length - 1))]}
+                src={normalizeImageUrl(product.images[Math.min(selectedImageIndex, Math.max(0, product.images.length - 1))])}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -183,7 +186,7 @@ const ProductDetail: React.FC = () => {
                     aria-label={`View image ${idx + 1}`}
                   >
                     <img
-                      src={img}
+                      src={normalizeImageUrl(img)}
                       alt={`${product.name} ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />

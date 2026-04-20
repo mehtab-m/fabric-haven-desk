@@ -4,6 +4,7 @@ import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { normalizeImageUrl } from '@/lib/imageUtils';
 
 const Cart: React.FC = () => {
   const { items, removeFromCart, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
@@ -52,7 +53,7 @@ const Cart: React.FC = () => {
               {/* Image */}
               <Link to={`/product/${product.id}`} className="shrink-0">
                 <img
-                  src={product.images[0]}
+                  src={normalizeImageUrl(product.images[0])}
                   alt={product.name}
                   className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg"
                 />

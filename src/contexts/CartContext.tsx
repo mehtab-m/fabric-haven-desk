@@ -3,6 +3,7 @@ import { Product } from '@/services/mockData';
 import { useAuth } from './AuthContext';
 import { cartAPI, productAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
+import { normalizeImageUrls } from '@/lib/imageUtils';
 
 interface CartItem {
   id?: string; // Backend cart item ID
@@ -57,7 +58,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   originalPrice: product.price,
                   discountedPrice: product.price,
                   showOnHomePage: false,
-                  images: product.images || ['https://via.placeholder.com/300'],
+                  images: normalizeImageUrls(product.images || ['https://via.placeholder.com/300']),
                   description: product.description,
                   inStock: product.stock > 0,
                   rating: 0,

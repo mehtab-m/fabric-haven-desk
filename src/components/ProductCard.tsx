@@ -6,6 +6,7 @@ import { Product } from '@/services/mockData';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { cn } from '@/lib/utils';
+import { normalizeImageUrl } from '@/lib/imageUtils';
 
 interface ProductCardProps {
   product: Product;
@@ -69,7 +70,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, subcategoryName }) =
       <Link to={`/product/${product.id}`}>
         <div className="aspect-square overflow-hidden">
           <img
-            src={product.images[0]}
+            src={normalizeImageUrl(product.images[0])}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />

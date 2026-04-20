@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { Product } from '@/services/mockData';
 import { useAuth } from './AuthContext';
 import { wishlistAPI } from '@/services/api';
+import { normalizeImageUrls } from '@/lib/imageUtils';
 
 interface WishlistContextType {
   items: Product[];
@@ -31,7 +32,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
           originalPrice: p.price,
           discountedPrice: p.price,
           showOnHomePage: p.showOnHomePage || false,
-          images: p.images || ['https://via.placeholder.com/300'],
+          images: normalizeImageUrls(p.images || ['https://via.placeholder.com/300']),
           description: p.description,
           inStock: (p.stock || 0) > 0,
           rating: p.rating || 0,
@@ -70,7 +71,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
           originalPrice: p.price,
           discountedPrice: p.price,
           showOnHomePage: p.showOnHomePage || false,
-          images: p.images || ['https://via.placeholder.com/300'],
+          images: normalizeImageUrls(p.images || ['https://via.placeholder.com/300']),
           description: p.description,
           inStock: (p.stock || 0) > 0,
           rating: p.rating || 0,
@@ -96,7 +97,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
           originalPrice: p.price,
           discountedPrice: p.price,
           showOnHomePage: p.showOnHomePage || false,
-          images: p.images || ['https://via.placeholder.com/300'],
+          images: normalizeImageUrls(p.images || ['https://via.placeholder.com/300']),
           description: p.description,
           inStock: (p.stock || 0) > 0,
           rating: p.rating || 0,

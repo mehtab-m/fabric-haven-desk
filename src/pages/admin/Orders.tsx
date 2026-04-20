@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Order, Product } from '@/services/mockData';
 import { orderAPI, productAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
+import { normalizeImageUrls } from '@/lib/imageUtils';
 
 const AdminOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -45,7 +46,7 @@ const AdminOrders: React.FC = () => {
           originalPrice: p.price,
           discountedPrice: p.price,
           showOnHomePage: p.showOnHomePage || false,
-          images: p.images || ['https://via.placeholder.com/300'],
+          images: normalizeImageUrls(p.images || ['https://via.placeholder.com/300']),
           description: p.description,
           inStock: (p.stock || 0) > 0,
           rating: 0,

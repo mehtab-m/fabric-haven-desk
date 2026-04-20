@@ -6,6 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
 import { Product, Category, Subcategory } from '@/services/mockData';
 import { productAPI, categoryAPI, subcategoryAPI } from '@/services/api';
+import { normalizeImageUrls } from '@/lib/imageUtils';
 
 const heroImage = '/logo/background.jpg';
 const Home: React.FC = () => {
@@ -32,7 +33,7 @@ const Home: React.FC = () => {
             originalPrice: p.price || p.originalPrice,
             discountedPrice: p.price || p.discountedPrice || p.price,
             showOnHomePage: p.showOnHomePage || false,
-            images: p.images && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300'],
+            images: p.images && p.images.length > 0 ? normalizeImageUrls(p.images) : ['https://via.placeholder.com/300'],
             description: p.description,
             inStock: (p.stock || 0) > 0,
             rating: p.rating || 0,
