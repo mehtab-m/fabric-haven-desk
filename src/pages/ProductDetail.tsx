@@ -42,6 +42,7 @@ const ProductDetail: React.FC = () => {
           reviews: backendProduct.reviews || 0,
         };
         setProduct(mappedProduct);
+        console.log(`hey i am fetching image with url ${mappedProduct.images.join(', ')} for product id ${mappedProduct.id}`);
         setSelectedImageIndex(0);
 
         if (mappedProduct.categoryId) {
@@ -96,6 +97,7 @@ const ProductDetail: React.FC = () => {
               reviews: p.reviews || 0,
             }));
           setRelatedProducts(mappedRelated);
+          console.log(`hey i am fetching image URLs for related products for product id ${mappedProduct.id}: ${mappedRelated.map((rp) => rp.images[0]).join(', ')}`);
         }
       } catch (error) {
         console.error('Failed to load product detail', error);

@@ -29,6 +29,7 @@ const CategoryPage: React.FC = () => {
           description: (catRaw as any).description || '',
         };
         setCategory(mappedCategory);
+        console.log(`hey i am fetching image with url ${mappedCategory.image} for category id ${mappedCategory.id}`);
 
         const [subcategoriesData, productsData] = await Promise.all([
           subcategoryAPI.getAll(),
@@ -70,6 +71,7 @@ const CategoryPage: React.FC = () => {
               } as Product)
           )
         );
+        console.log(`hey i am fetching category product image URLs for category id ${mappedCategory.id}: ${prodItems.map((p: any) => (p.images && p.images[0]) || 'none').join(', ')}`);
       } catch (error) {
         console.error('Failed to load category page', error);
       }

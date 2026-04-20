@@ -67,6 +67,7 @@ const AdminCategories: React.FC = () => {
           image: formData.image || updated.image,
           description: (updated as any).description || '',
         };
+        console.log(`hey I am storing image for category id ${updatedCategory.id} to url ${updatedCategory.image}`);
 
         setCategories(categories.map((c) => (c.id === editingCategory.id ? updatedCategory : c)));
         toast({ title: 'Category updated successfully' });
@@ -84,6 +85,7 @@ const AdminCategories: React.FC = () => {
           description: formData.description,
           image: formData.image,
         };
+        console.log(`hey I am storing image for category id ${newCategory.id} to url ${newCategory.image}`);
 
         setCategories([...categories, newCategory]);
         toast({ title: 'Category added successfully' });
@@ -114,6 +116,7 @@ const AdminCategories: React.FC = () => {
       setUploading(true);
       const result = await uploadAPI.image(file);
       setFormData((prev) => ({ ...prev, image: result.url }));
+      console.log(`hey I am storing image for category temp to url ${result.url}`);
       toast({ title: 'Image uploaded successfully' });
     } catch (error: any) {
       console.error('Image upload failed', error);

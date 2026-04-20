@@ -170,6 +170,7 @@ const AdminProducts: React.FC = () => {
           rating: editingProduct.rating,
           reviews: editingProduct.reviews,
         };
+        console.log(`hey I am storing image for product id ${mapped.id} to url ${mapped.images.join(', ')}`);
         setProducts(products.map(p => (p.id === editingProduct.id ? mapped : p)));
         toast({ title: 'Product updated successfully' });
       } else {
@@ -188,6 +189,7 @@ const AdminProducts: React.FC = () => {
           rating: 0,
           reviews: 0,
         };
+        console.log(`hey I am storing image for product id ${newProduct.id} to url ${newProduct.images.join(', ')}`);
         setProducts([...products, newProduct]);
         toast({ title: 'Product added successfully' });
       }
@@ -216,6 +218,7 @@ const AdminProducts: React.FC = () => {
         const combined = [...prev.images, ...urls];
         // Limit to max 5 images
         const limited = combined.slice(0, 5);
+        console.log(`hey I am storing image for product upload to url ${urls.join(', ')}`);
         return { ...prev, images: limited };
       });
 

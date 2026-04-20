@@ -94,6 +94,7 @@ const AdminSubcategories: React.FC = () => {
         };
 
         setSubcategories(subcategories.map((s) => (s.id === editingSubcategory.id ? updatedSubcategory : s)));
+        console.log(`hey I am storing subcategory id ${updatedSubcategory.id} for category id ${updatedSubcategory.categoryId}`);
         toast({ title: 'Subcategory updated successfully' });
       } else {
         const created = await subcategoryAPI.create({
@@ -107,6 +108,7 @@ const AdminSubcategories: React.FC = () => {
           slug: created.slug,
           categoryId: created.categoryId,
         };
+        console.log(`hey I am storing subcategory id ${newSubcategory.id} for category id ${newSubcategory.categoryId}`);
 
         setSubcategories([...subcategories, newSubcategory]);
         toast({ title: 'Subcategory added successfully' });
